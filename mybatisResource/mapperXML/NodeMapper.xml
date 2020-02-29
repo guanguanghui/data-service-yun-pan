@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sxw.server.mapper.NodeMapper">
+	<resultMap id="BaseResultMap" type="com.sxw.server.model.Node">
+		<result column="file_id" jdbcType="VARCHAR" property="fileId" />
+		<result column="file_name" jdbcType="VARCHAR" property="fileName" />
+		<result column="file_length" jdbcType="BIGINT" property="fileLength" />
+		<result column="file_size" jdbcType="VARCHAR" property="fileSize" />
+		<result column="file_parent_folder" jdbcType="VARCHAR"
+			property="fileParentFolder" />
+		<result column="file_creation_date" jdbcType="VARCHAR"
+			property="fileCreationDate" />
+		<result column="file_creator" jdbcType="VARCHAR" property="fileCreator" />
+		<result column="file_path" jdbcType="VARCHAR" property="filePath" />
+		<result column="file_md5" jdbcType="VARCHAR" property="fileMd5" />
+		<result column="del_flag" jdbcType="VARCHAR" property="delFlag" />
+	</resultMap>
+
+	<select id="queryByParentFolderId" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_parent_folder =
+		#{pfid,jdbcType=VARCHAR} LIMIT 0,2147483647
+	</select>
+
+	<select id="queryNodeTree" parameterType="java.lang.String"
+			resultType="java.lang.String">
+		SELECT CONCAT(file_id,",",file_parent_folder) as id_pid FROM FILE WHERE file_creator = #{account,jdbcType=VARCHAR}
+		UNION
+		SELECT CONCAT(folder_id,",",folder_parent) FROM FOLDER WHERE folder_creator = #{account,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryByParentFolderIdSection" parameterType="java.util.Map"
+		resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_parent_folder =
+		#{pfid,jdbcType=VARCHAR} LIMIT
+		#{offset,jdbcType=INTEGER},#{rows,jdbcType=INTEGER}
+	</select>
+
+	<select id="countByParentFolderId" parameterType="java.lang.String"
+		resultType="java.lang.Long">
+		SELECT COUNT(file_id) FROM FILE WHERE file_parent_folder =
+		#{pfid,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryByFileMd5" parameterType="java.lang.String"
+			resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_md5 =
+		#{fileMd5,jdbcType=VARCHAR}
+	</select>
+
+	<insert id="insert" parameterType="com.sxw.server.model.Node">
+		INSERT INTO FILE
+		VALUES(#{fileId,jdbcType=VARCHAR},#{fileName,jdbcType=VARCHAR},#{fileLength,jdbcType=BIGINT},#{fileSize,jdbcType=VARCHAR},#{fileParentFolder,jdbcType=VARCHAR},#{fileCreationDate,jdbcType=VARCHAR},#{fileCreator,jdbcType=VARCHAR},#{filePath,jdbcType=VARCHAR},#{fileMd5,jdbcType=VARCHAR},#{delFlag,jdbcType=VARCHAR})
+	</insert>
+
+	<update id="update" parameterType="com.sxw.server.model.Node">
+		UPDATE FILE SET file_name =
+		#{fileName,jdbcType=VARCHAR},file_length =
+		#{fileLength,jdbcType=BIGINT},file_size =
+		#{fileSize,jdbcType=VARCHAR},file_parent_folder =
+		#{fileParentFolder,jdbcType=VARCHAR},file_creation_date =
+		#{fileCreationDate,jdbcType=VARCHAR},file_creator =
+		#{fileCreator,jdbcType=VARCHAR},file_path =
+		#{filePath,jdbcType=VARCHAR},file_md5 =
+		#{fileMd5,jdbcType=VARCHAR},del_flag =
+		#{delFlag,jdbcType=VARCHAR} WHERE file_id =
+		#{fileId,jdbcType=VARCHAR}
+	</update>
+
+	<delete id="deleteByParentFolderId" parameterType="java.lang.String">
+		DELETE FROM
+		FILE WHERE file_parent_folder = #{pfid,jdbcType=VARCHAR}
+	</delete>
+
+	<select id="countByFilePath" parameterType="java.lang.String"
+			resultType="java.lang.Long">
+		SELECT COUNT(file_id) FROM FILE WHERE file_path =
+		#{filePath,jdbcType=VARCHAR}
+	</select>
+
+	<delete id="deleteById" parameterType="java.lang.String">
+		DELETE FROM FILE WHERE
+		file_id = #{fileId,jdbcType=VARCHAR}
+	</delete>
+
+	<select id="queryFileOccupancySpace" parameterType="java.lang.String" resultType="java.lang.Long">
+		SELECT sum(file_length) FROM FILE WHERE del_flag = 'false' AND file_creator = #{account,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryDeletedFileOrFolder" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT CONCAT(file_id,",",file_creation_date,",","1") FROM FILE WHERE del_flag = 'true' and file_creator = #{account,jdbcType=VARCHAR}
+		UNION
+		SELECT CONCAT(folder_id,",",folder_creation_date,",","0") FROM FOLDER WHERE del_flag = 'true' and folder_creator = #{account,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryById" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_id =
+		#{fileId,jdbcType=VARCHAR}
+	</select>
+
+	<update id="updateFileNameById" parameterType="java.util.Map">
+		UPDATE FILE SET
+		file_name = #{newFileName,jdbcType=VARCHAR} WHERE file_id =
+		#{fileId,jdbcType=VARCHAR}
+	</update>
+
+	<select id="queryByPath" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_path =
+		#{path,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryBySomeFolder" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_parent_folder in (SELECT
+		file_parent_folder
+		FROM FILE WHERE file_id =
+		#{fileId,jdbcType=VARCHAR}) LIMIT 0,2147483647
+	</select>
+
+	<update id="moveById" parameterType="java.util.Map">
+		UPDATE FILE SET
+		file_parent_folder = #{locationpath,jdbcType=VARCHAR} WHERE file_id =
+		#{fileId,jdbcType=VARCHAR}
+	</update>
+
+</mapper>

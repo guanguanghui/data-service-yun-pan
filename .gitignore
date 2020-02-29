@@ -1,0 +1,8 @@
+*.class
+*.log
+
+.idea/
+filesystem/
+libs/
+target/
+logs/

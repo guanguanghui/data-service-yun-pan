@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sxw.server.mapper.FileSenderMapper">
+	<resultMap id="BaseResultMap" type="com.sxw.server.model.FileSend">
+		<result column="id" jdbcType="VARCHAR" property="id" />
+		<result column="file_id" jdbcType="VARCHAR" property="fileId" />
+		<result column="file_name" jdbcType="VARCHAR" property="fileName" />
+		<result column="file_parent" jdbcType="VARCHAR" property="fileParent" />
+		<result column="file_sender" jdbcType="VARCHAR" property="fileSender" />
+		<result column="file_receiver" jdbcType="VARCHAR" property="fileReceiver" />
+		<result column="file_send_date" jdbcType="VARCHAR" property="fileSendDate" />
+		<result column="file_send_state" jdbcType="VARCHAR" property="fileSendState" />
+		<result column="file_type" jdbcType="VARCHAR" property="fileType" />
+	</resultMap>
+
+	<select id="queryBySenderAndReceiver" parameterType="java.util.Map"
+			resultMap="BaseResultMap">
+		SELECT * FROM FILE_SEND WHERE file_sender =
+		#{fileSender,jdbcType=VARCHAR} AND file_receiver =
+		#{fileReceiver,jdbcType=VARCHAR} LIMIT 0,2147483647
+	</select>
+
+	<select id="queryByFileIdAndReceiver" parameterType="java.util.Map"
+			resultMap="BaseResultMap">
+		SELECT * FROM FILE_SEND WHERE file_id =
+		#{fileId,jdbcType=VARCHAR} AND file_receiver =
+		#{fileReceiver,jdbcType=VARCHAR} LIMIT 0,2147483647
+	</select>
+
+	<select id="queryByReceiver" parameterType="java.util.Map"
+			resultMap="BaseResultMap">
+		SELECT * FROM FILE_SEND WHERE file_receiver =
+		#{fileReceiver,jdbcType=VARCHAR} AND file_parent =
+        #{fileParent,jdbcType=VARCHAR} LIMIT
+        #{offset,jdbcType=INTEGER},#{rows,jdbcType=INTEGER}
+	</select>
+
+    <select id="countByParentIdAndReceiver" parameterType="java.util.Map"
+            resultType="java.lang.Long">
+        SELECT COUNT(id) FROM FILE_SEND WHERE file_parent =
+        #{fileParent,jdbcType=VARCHAR} AND file_receiver = #{fileReceiver,jdbcType=VARCHAR}
+    </select>
+
+	<update id="update" parameterType="com.sxw.server.model.FileSend">
+		UPDATE FILE_SEND SET file_id =
+		#{fileId,jdbcType=VARCHAR},file_name =
+		#{fileName,jdbcType=VARCHAR},file_parent =
+		#{fileParent,jdbcType=VARCHAR},file_sender =
+		#{fileSender,jdbcType=VARCHAR},file_receiver =
+		#{fileReceiver,jdbcType=VARCHAR},file_send_date =
+		#{fileSendDate,jdbcType=VARCHAR},file_send_state =
+		#{fileSendState,jdbcType=VARCHAR},file_type =
+		#{fileType,jdbcType=VARCHAR} WHERE id =
+		#{id,jdbcType=VARCHAR}
+	</update>
+
+	<insert id="insert" parameterType="com.sxw.server.model.FileSend">
+		INSERT INTO FILE_SEND
+		VALUES(#{id,jdbcType=VARCHAR},#{fileId,jdbcType=VARCHAR},#{fileName,jdbcType=VARCHAR},#{fileParent,jdbcType=VARCHAR},#{fileSender,jdbcType=VARCHAR},#{fileReceiver,jdbcType=VARCHAR},#{fileSendDate,jdbcType=VARCHAR},#{fileSendState,jdbcType=VARCHAR},#{fileType,jdbcType=VARCHAR})
+	</insert>
+
+</mapper>
