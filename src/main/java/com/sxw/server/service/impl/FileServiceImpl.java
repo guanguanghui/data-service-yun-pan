@@ -24,6 +24,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
@@ -1639,10 +1640,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (node == null) {
                     return ERROR_PARAMETER;
                 }
-                if (!ConfigureReader.instance().accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
+                if (!accessAuthUtil.accessSendFile(node, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.SEND_FILES,
+                if (!accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
                         fu.getAllFoldersId(node.getFileParentFolder()))) {
                     return NO_AUTHORIZED;
                 }
@@ -1676,10 +1677,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (folder == null) {
                     return ERROR_PARAMETER;
                 }
-                if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.SEND_FILES,
+                if (!accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
                         fu.getAllFoldersId(folder.getFolderParent()))) {
                     return NO_AUTHORIZED;
                 }
@@ -1694,14 +1695,20 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 fs.setFileReceiver(fileReceiver);
                 fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
                 fs.setFileType(FileSendType.FOLDER.getName());
-                Stream<FileSend> folderSends = fsm.queryBySenderAndReceiver(key).parallelStream()
-                        .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName()));
 
-                if (folderSends.anyMatch((e) -> e.getFileName().equals(folder.getFolderName()))) {
+                Map<String, Object> key0 = new HashMap<>();
+                key0.put("fileParent", "receive");
+                key0.put("fileReceiver", fileReceiver);
+                key0.put("offset", 0L);
+                key0.put("rows", Integer.MAX_VALUE);
+                List<FileSend> folderSends = fsm.queryByReceiver(key0).parallelStream()
+                        .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName())).collect(Collectors.toList());
+
+                if (folderSends.stream().anyMatch((e) -> e.getFileName().equals(folder.getFolderName()))) {
                     // 文件夹名重复的处理
                     fs.setFileName(FileNodeUtil.getNewReceiveFolderName(fs.getFileName(),folderSends));
                 }
-                doSendFolderHelp(fs);
+                doSendFolderHelp(fs,folder.getFolderCreator());
                 this.lu.writeSendFolderEvent(request, fs);
             }
             if (fidList.size() > 0) {
@@ -1713,9 +1720,9 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
     }
 
-    private void doSendFolderHelp(FileSend folder) {
+    private void doSendFolderHelp(FileSend folder,String owner) {
         String receiver = folder.getFileReceiver();
-        List<String> ipPidList = fm.queryNodeTree(folder.getFileSender());
+        List<String> ipPidList = fm.queryNodeTree(owner);
         ConcurrentHashMap<String, String> data = new ConcurrentHashMap<String, String>();
         ipPidList.stream().parallel().forEach(e -> {
             String[] idPid = e.split(",");

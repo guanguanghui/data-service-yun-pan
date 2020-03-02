@@ -24,7 +24,7 @@
 			resultMap="BaseResultMap">
 		SELECT * FROM FILE_SEND WHERE file_id =
 		#{fileId,jdbcType=VARCHAR} AND file_receiver =
-		#{fileReceiver,jdbcType=VARCHAR} LIMIT 0,2147483647
+		#{fileReceiver,jdbcType=VARCHAR} LIMIT 1
 	</select>
 
 	<select id="queryByReceiver" parameterType="java.util.Map"

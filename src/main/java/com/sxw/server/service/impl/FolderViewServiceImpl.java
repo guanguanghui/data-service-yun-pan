@@ -218,8 +218,8 @@ public class FolderViewServiceImpl implements FolderViewService {
             }
         }
 
-        if (cr.authorized(account, AccountAuth.MOVE_FILES, fu.getAllFoldersId(fid))) {
-            authList.add("M");
+        if (cr.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER, fu.getAllFoldersId(fid))) {
+            authList.add("D");
         }
         if (cr.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(fid))) {
             authList.add("P");

@@ -234,10 +234,10 @@ public class FileNodeUtil {
 		return newName;
 	}
 
-	public static String getNewReceiveFolderName(String originalName, Stream<FileSend> folders) {
+	public static String getNewReceiveFolderName(String originalName, List<FileSend> folders) {
 		int i = 0;
 		List<String> fileNames = Arrays
-				.asList(folders.parallel().map((t) -> t.getFileName()).toArray(String[]::new));
+				.asList(folders.stream().parallel().map((t) -> t.getFileName()).toArray(String[]::new));
 		String newName = originalName;
 		while (fileNames.contains(newName)) {
 			i++;
