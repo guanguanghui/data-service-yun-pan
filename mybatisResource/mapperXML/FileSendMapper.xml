@@ -3,6 +3,7 @@
 <mapper namespace="com.sxw.server.mapper.FileSenderMapper">
 	<resultMap id="BaseResultMap" type="com.sxw.server.model.FileSend">
 		<result column="id" jdbcType="VARCHAR" property="id" />
+		<result column="pid" jdbcType="VARCHAR" property="pid" />
 		<result column="file_id" jdbcType="VARCHAR" property="fileId" />
 		<result column="file_name" jdbcType="VARCHAR" property="fileName" />
 		<result column="file_parent" jdbcType="VARCHAR" property="fileParent" />
@@ -12,6 +13,17 @@
 		<result column="file_send_state" jdbcType="VARCHAR" property="fileSendState" />
 		<result column="file_type" jdbcType="VARCHAR" property="fileType" />
 	</resultMap>
+
+    <select id="queryFileSendTree" parameterType="java.lang.String"
+            resultType="java.lang.String">
+        SELECT CONCAT(id,",",pid) as id_pid FROM FILE_SEND WHERE file_receiver = #{account,jdbcType=VARCHAR}
+    </select>
+
+    <select id="queryById" parameterType="java.lang.String"
+            resultMap="BaseResultMap">
+        SELECT * FROM FILE_SEND WHERE id =
+        #{id,jdbcType=VARCHAR}
+    </select>
 
 	<select id="queryBySenderAndReceiver" parameterType="java.util.Map"
 			resultMap="BaseResultMap">
@@ -30,10 +42,17 @@
 	<select id="queryByReceiver" parameterType="java.util.Map"
 			resultMap="BaseResultMap">
 		SELECT * FROM FILE_SEND WHERE file_receiver =
-		#{fileReceiver,jdbcType=VARCHAR} AND file_parent =
-        #{fileParent,jdbcType=VARCHAR} LIMIT
+		#{fileReceiver,jdbcType=VARCHAR} AND pid =
+        #{pid,jdbcType=VARCHAR} LIMIT
         #{offset,jdbcType=INTEGER},#{rows,jdbcType=INTEGER}
 	</select>
+
+    <select id="queryByPid" parameterType="java.util.Map"
+            resultMap="BaseResultMap">
+        SELECT * FROM FILE_SEND WHERE pid =
+        #{pid,jdbcType=VARCHAR} LIMIT
+        #{offset,jdbcType=INTEGER},#{rows,jdbcType=INTEGER}
+    </select>
 
     <select id="countByParentIdAndReceiver" parameterType="java.util.Map"
             resultType="java.lang.Long">
@@ -41,8 +60,15 @@
         #{fileParent,jdbcType=VARCHAR} AND file_receiver = #{fileReceiver,jdbcType=VARCHAR}
     </select>
 
+    <select id="countByPid" parameterType="java.lang.String"
+            resultType="java.lang.Long">
+        SELECT COUNT(id) FROM FILE_SEND WHERE pid =
+        #{pid,jdbcType=VARCHAR}
+    </select>
+
 	<update id="update" parameterType="com.sxw.server.model.FileSend">
-		UPDATE FILE_SEND SET file_id =
+		UPDATE FILE_SEND SET pid =
+		#{pid,jdbcType=VARCHAR},file_id =
 		#{fileId,jdbcType=VARCHAR},file_name =
 		#{fileName,jdbcType=VARCHAR},file_parent =
 		#{fileParent,jdbcType=VARCHAR},file_sender =
@@ -56,7 +82,7 @@
 
 	<insert id="insert" parameterType="com.sxw.server.model.FileSend">
 		INSERT INTO FILE_SEND
-		VALUES(#{id,jdbcType=VARCHAR},#{fileId,jdbcType=VARCHAR},#{fileName,jdbcType=VARCHAR},#{fileParent,jdbcType=VARCHAR},#{fileSender,jdbcType=VARCHAR},#{fileReceiver,jdbcType=VARCHAR},#{fileSendDate,jdbcType=VARCHAR},#{fileSendState,jdbcType=VARCHAR},#{fileType,jdbcType=VARCHAR})
+		VALUES(#{id,jdbcType=VARCHAR},#{pid,jdbcType=VARCHAR},#{fileId,jdbcType=VARCHAR},#{fileName,jdbcType=VARCHAR},#{fileParent,jdbcType=VARCHAR},#{fileSender,jdbcType=VARCHAR},#{fileReceiver,jdbcType=VARCHAR},#{fileSendDate,jdbcType=VARCHAR},#{fileSendState,jdbcType=VARCHAR},#{fileType,jdbcType=VARCHAR})
 	</insert>
 
 </mapper>

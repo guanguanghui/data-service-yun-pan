@@ -4,9 +4,7 @@ import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.FileSend;
-import com.sxw.server.pojo.FolderView;
-import com.sxw.server.pojo.RemainingFolderView;
-import com.sxw.server.pojo.SreachView;
+import com.sxw.server.pojo.*;
 import com.sxw.server.service.FolderViewService;
 import com.sxw.server.util.ConfigureReader;
 import com.sxw.server.util.FolderUtil;
@@ -142,54 +140,57 @@ public class FolderViewServiceImpl implements FolderViewService {
         }
         final String account = (String) session.getAttribute("ACCOUNT");
         // 初始化的收到文件根视图: receive
+        FileSend fs = this.fsm.queryById(fid);
+        Folder vf = this.fm.queryById(fs.getFileId());
+        FolderSendView fsv = new FolderSendView(vf);
+        fsv.setId(fs.getId());
+        fsv.setPid(fs.getPid());
 
-        Folder vf = this.fm.queryById(fid);
         if (vf == null) {
             return "NOT_FOUND";// 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
         }
 
-        final FolderView fv = new FolderView();
+        final FolderReceiveView fv = new FolderReceiveView();
         fv.setSelectStep(SELECT_STEP);// 返回查询步长
-        // 替换vf
-        if (!fid.equals("receive")){
-            Map<String, String> keyMap = new HashMap<>();
-            keyMap.put("fileId",fid);
-            keyMap.put("fileReceiver",account);
-            FileSend fs = fsm.queryByFileIdAndReceiver(keyMap);
-            vf.setFolderParent(fs.getFileParent());
-        }
-        fv.setFolder(vf);
+
+        fv.setFolder(fsv);
         fv.setParentList(this.fu.getReceiveParentList(fid, account));
 
-        Map<String, String> keyMap0 = new HashMap<>();
-        keyMap0.put("fileParent",fid);
-        keyMap0.put("fileReceiver",account);
-        long foldersOffset = this.fsm.countByParentIdAndReceiver(keyMap0);// 第一波文件夹数据按照最后的记录作为查询偏移量
+        long foldersOffset = this.fsm.countByPid(fid);// 第一波文件夹数据按照最后的记录作为查询偏移量
         fv.setFoldersOffset(foldersOffset);
         Map<String, Object> keyMap1 = new HashMap<>();
-        keyMap1.put("fileParent", fid);
-        keyMap1.put("fileReceiver", account);
+        keyMap1.put("pid", fid);
         long fOffset = foldersOffset - SELECT_STEP;
         keyMap1.put("offset", fOffset > 0L ? fOffset : 0L);// 进行查询
         keyMap1.put("rows", SELECT_STEP);
-        List<FileSend> fsList = this.fsm.queryByReceiver(keyMap1);
-        List<Folder> folders = fsList.parallelStream()
+        List<FileSend> fsList = this.fsm.queryByPid(keyMap1).stream().filter(e -> {
+            return e.getFileReceiver().equals(account);
+        }).collect(Collectors.toList());
+        List<FolderSendView> folders = fsList.parallelStream()
                 .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName()))
                 .map(e -> {
                     Folder folder = fm.queryById(e.getFileId());
-                    folder.setFolderParent(fid);
+                    // folder.setFolderParent(fid);
+                    folder.setFolderName(e.getFileName());
                     folder.setFolderCreator(e.getFileSender());
                     folder.setFolderCreationDate(e.getFileSendDate());
-                    return folder;
+                    FolderSendView fsv0 = new FolderSendView(folder);
+                    fsv0.setId(e.getId());
+                    fsv0.setPid(e.getPid());
+                    return fsv0;
                 }).collect(Collectors.toList());
-        List<Node> nodes = fsList.parallelStream()
+        List<FileSendView> nodes = fsList.parallelStream()
                 .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
                 .map(e -> {
                     Node node = flm.queryById(e.getFileId());
-                    node.setFileParentFolder(fid);
+                    // node.setFileParentFolder(fid);
+                    node.setFileName(e.getFileName());
                     node.setFileCreator(e.getFileSender());
                     node.setFileCreationDate(e.getFileSendDate());
-                    return node;
+                    FileSendView fsv1 = new FileSendView(node);
+                    fsv1.setId(e.getId());
+                    fsv1.setPid(e.getPid());
+                    return fsv1;
                 }).collect(Collectors.toList());
 
         fv.setFolderList(folders);

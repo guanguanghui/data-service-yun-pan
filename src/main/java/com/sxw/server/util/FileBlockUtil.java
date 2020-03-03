@@ -2,8 +2,10 @@ package com.sxw.server.util;
 
 import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
+import com.sxw.server.mapper.FileSenderMapper;
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
+import com.sxw.server.model.FileSend;
 import com.sxw.server.model.Folder;
 import com.sxw.server.model.Node;
 import org.springframework.stereotype.*;
@@ -37,6 +39,8 @@ public class FileBlockUtil {
 	private NodeMapper fm;// 节点映射，用于遍历
 	@Resource
 	private FolderMapper flm;// 文件夹映射，同样用于遍历
+	@Resource
+	private FileSenderMapper fsm;// 收到文件映射
 	@Resource
 	private LogUtil lu;// 日志工具
 	@Resource
@@ -347,6 +351,11 @@ public class FileBlockUtil {
 			final List<Folder> folders = new ArrayList<>();
 			for (String fid : fidList) {
 				Folder fo = flm.queryById(fid);
+				FileSend folderSend = fsm.queryById(fid);
+				if (folderSend != null){
+					fo = flm.queryById(folderSend.getFileId());
+				}
+
 				if (accessAuthUtil.accessFolder(fo, account) && accessAuthUtil
 						.authorized(account, AccountAuth.DOWNLOAD_FILES, fu.getAllFoldersId(fo.getFolderParent()))) {
 					if (fo != null) {
@@ -357,6 +366,10 @@ public class FileBlockUtil {
 			final List<Node> nodes = new ArrayList<>();
 			for (String id : idList) {
 				Node n = fm.queryById(id);
+				FileSend fileSend = fsm.queryById(id);
+				if (fileSend != null){
+				    n = fm.queryById(fileSend.getFileId());
+                }
 				if ( (accessAuthUtil.accessFolder(flm.queryById(n.getFileParentFolder()), account) || accessAuthUtil.accessSendFile(n, account))
 						&& accessAuthUtil.authorized(account, AccountAuth.DOWNLOAD_FILES,
 								fu.getAllFoldersId(n.getFileParentFolder()))) {

@@ -785,7 +785,7 @@ function showReceiveBinParentList(folderView) {
 	var f = folderView.folder;
 	if(folderView.parentList.length>0){
 		$.each(folderView.parentList, function(n, val) {
-			$("#parentFolderList").append("<li><a href='javascript:void(0);' onclick='entryReceiveBinFolder("+'"' + val.folderId +'"'+")'>"+val.folderName+"</a></li>");
+			$("#parentFolderList").append("<li><a href='javascript:void(0);' onclick='entryReceiveBinFolder("+'"' + val.id +'"'+")'>"+val.folderName+"</a></li>");
 		});
 	}else{
 		$("#parentFolderList").html("<li class='disabled'><a>无</a></li>");
@@ -1194,11 +1194,11 @@ function showReceiveBin(fid,targetId){
 				// 上述情况都不是，则返回的应该是文件夹视图数据，接下来对其进行解析
 				folderView = eval("(" + result + ")");
 				// 记录当前获取的文件夹视图的ID号，便于其他操作使用
-				receive_path = folderView.folder.folderId;
+				receive_path = folderView.folder.id;
 				// 存储打开的文件夹路径至Cookie中，以便下次打开时直接显示
 				document.cookie = "receive_id=" + escape(receive_path);
 				// 记录上级目录ID，方便返回上一级
-				receive_parentpath = folderView.folder.folderParent;
+				receive_parentpath = folderView.folder.pid;
 				screenedFoldrView=null;
 				// 备份一份原始的文件夹视图数据，同时也记录下原始的查询偏移量
 				originFolderView=$.extend(true, {}, folderView);
@@ -1752,7 +1752,7 @@ function createFileRow(fi,aL,aD,aR,aO){
 			break;
 		}
 	}
-	if (aD) {
+	if (aD && !isOnReceiveBin) {
 		fileRow = fileRow
 				+ "<button onclick='showDeleteFileModel("
 				+ '"'
@@ -1761,6 +1761,15 @@ function createFileRow(fi,aL,aD,aR,aO){
 				+ fi.fileName
 				+ '"'
 				+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-remove'></span> 删除</button>";
+	}else if(aD && isOnReceiveBin){
+	    fileRow = fileRow
+        		+ "<button onclick='showDeleteFileSendModel("
+        		+ '"'
+        		+ fi.fileId
+        		+ '","'
+        		+ fi.fileName
+        		+ '"'
+        		+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-remove'></span> 删除</button>";
 	}
 	if (aR) {
 		fileRow = fileRow
@@ -1905,13 +1914,24 @@ function createRecycleNewFolderRow(f,aD,aR,aO){
 // 根据一个文件夹对象生成对应的文件行的HTML内容
 function createNewFolderRow(f,aD,aR,aO,action){
 	f.folderName = f.folderName.replace(/\'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-	var folderRow = "<tr id='"+f.folderId+"' onclick='checkfile(event,"+'"'+f.folderId+'"'+")' ondblclick='checkConsFile(event,"+'"'+f.folderId+'"'+")' class='filerow' iskfolder='true' ><td><button onclick='" + action + "("
-			+ '"' + f.folderId + '"'
-			+ ")' class='btn btn-link btn-xs'>/"
-			+ f.folderName + "</button></td><td class='hidden-xs'>"
-			+ f.folderCreationDate + "</td><td>--</td><td class='hidden-xs'>"
-			+ f.folderCreator + "</td><td>";
-	if (aD) {
+	var folderRow;
+	if(!isOnReceiveBin){
+	    folderRow = "<tr id='"+f.folderId+"' onclick='checkfile(event,"+'"'+f.folderId+'"'+")' ondblclick='checkConsFile(event,"+'"'+f.folderId+'"'+")' class='filerow' iskfolder='true' ><td><button onclick='" + action + "("
+        		+ '"' + f.folderId + '"'
+        		+ ")' class='btn btn-link btn-xs'>/"
+        		+ f.folderName + "</button></td><td class='hidden-xs'>"
+        		+ f.folderCreationDate + "</td><td>--</td><td class='hidden-xs'>"
+        		+ f.folderCreator + "</td><td>";
+	}else{
+        folderRow = "<tr id='"+f.id+"' onclick='checkSendFile(event,"+'"'+f.id+'"'+")' ondblclick='checkConsSendFile(event,"+'"'+f.id+'"'+")' class='filerow' iskfolder='true' ><td><button onclick='" + action + "("
+               + '"' + f.id + '"'
+               + ")' class='btn btn-link btn-xs'>/"
+               + f.folderName + "</button></td><td class='hidden-xs'>"
+               + f.folderCreationDate + "</td><td>--</td><td class='hidden-xs'>"
+               + f.folderCreator + "</td><td>";
+	}
+
+	if (aD && !isOnReceiveBin) {
 		folderRow = folderRow
 				+ "<button onclick='showDeleteFolderModel("
 				+ '"'
@@ -1920,6 +1940,15 @@ function createNewFolderRow(f,aD,aR,aO,action){
 				+ f.folderName
 				+ '"'
 				+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-remove'></span> 删除</button>";
+	}else if(aD && isOnReceiveBin){
+	    folderRow = folderRow
+        		+ "<button onclick='showDeleteFolderSendModel("
+        		+ '"'
+        		+ f.folderId
+        		+ '","'
+        		+ f.folderName
+        		+ '"'
+        		+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-remove'></span> 删除</button>";
 	}
 	if (aR) {
 		folderRow = folderRow
@@ -2153,7 +2182,36 @@ function showRestoreFolderModel(folderId, folderName){
     			"提示：确定要还原文件夹：[" + folderName + "]及其全部内容么？如果确定，该文件夹及其全部内容将在剪贴板上，你可以选择自由粘贴！");
     	$('#restoreFolderModal').modal('toggle');
 }
+// 显示收到文件中 删除文件模态框
+function showDeleteFileSendModel(fileId, fileName) {
+	$('#deleteFileSendBox')
+			.html(
+					"<button id='dfmbutton' type='button' class='btn btn-danger' onclick='deleteFileSend("
+							+ '"' + fileId + '"' + ")'>删除</button>");
+	$("#dfmbutton").attr('disabled', false);
+	$('#deleteFileSendMessage').text("提示：确定要删除文件：[" + fileName + "]么？");
+	$('#deleteFileSendModal').modal('toggle');
+}
 
+function deleteFileSend(fileId){
+
+}
+
+// 显示收到文件中 删除文件夹模态框
+function showDeleteFolderSendModel(folderId, folderName) {
+	$('#deleteFolderSendBox')
+			.html(
+					"<button id='dmbutton' type='button' class='btn btn-danger' onclick='deleteFolderSend("
+							+ '"' + folderId + '"' + ")'>删除</button>");
+	$("#dmbutton").attr('disabled', false);
+	$('#deleteFolderSendMessage').text(
+			"提示：确定要删除文件夹：[" + folderName + "]及其全部内容么？");
+	$('#deleteFolderSendModal').modal('toggle');
+}
+
+function deleteFolderSend(folderId){
+
+}
 
 // 显示删除文件夹模态框
 function showDeleteFolderModel(folderId, folderName) {
@@ -3150,6 +3208,44 @@ function checkfile(event,fileId) {
 		}
 	}
 }
+
+// 选中某一行文件，如果使用Shift点击则为多选
+function checkSendFile(event,id) {
+	if(!isShift(event)){
+		$(".filerow").removeClass("info");
+		$("#" + id).addClass("info");
+	}else{
+		if ($("#" + id).hasClass("info")) {
+			$("#" + id).removeClass("info");
+		} else {
+			$("#" + id).addClass("info");
+		}
+	}
+}
+
+// 连续选中若干行文件：Shift+双击，选中规则为：前有选前，后有选后，全有也选后。
+function checkConsSendFile(event,id){
+	if(isShift(event)){
+		var endRow=$("#" + id);
+		var endRowIndex=endRow.index();
+		var startRowIndex=$('.filerow.info:last').index();
+		if(startRowIndex != -1){
+			if(startRowIndex < endRowIndex){
+				while(endRow[0] && !endRow.hasClass("info")){
+					endRow.addClass("info");
+					endRow=endRow.prev();
+				}
+			}else{
+				while(endRow[0] && !endRow.hasClass("info")){
+					endRow.addClass("info");
+					endRow=endRow.next();
+				}
+			}
+		}
+	}
+}
+
+
 
 // 连续选中若干行文件：Shift+双击，选中规则为：前有选前，后有选后，全有也选后。
 function checkConsFile(event,fileId){

@@ -12,9 +12,15 @@ public interface FileSenderMapper
 
     FileSend queryByFileIdAndReceiver(final Map<String, String> map);
 
+    FileSend queryById(final String id);
+
     List<FileSend> queryByReceiver(final Map<String, Object> map);
 
-    long countByParentIdAndReceiver(final Map<String, String> map);
+    List<FileSend> queryByPid(final Map<String, Object> map);
+
+    List<String> queryFileSendTree(final String account);
+
+    long countByPid(final String pid);
 
     int insert(final FileSend f);
     

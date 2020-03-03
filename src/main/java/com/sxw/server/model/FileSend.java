@@ -3,6 +3,7 @@ package com.sxw.server.model;
 public class FileSend
 {
     private String id;
+    private String pid;
     private String fileId;
     private String fileName;
     private String fileParent;
@@ -18,6 +19,14 @@ public class FileSend
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getPid() {
+        return pid;
+    }
+
+    public void setPid(String pid) {
+        this.pid = pid;
     }
 
     public String getFileId() {

@@ -40,6 +40,8 @@ public interface FileService {
 
 	String confirmCopyFiles(final HttpServletRequest request);
 
+	String confirmCopySendFiles(HttpServletRequest request);
+
 	String confirmSendFiles(final HttpServletRequest request);
 
 	String doMoveFiles(final HttpServletRequest request);
@@ -47,6 +49,8 @@ public interface FileService {
 	String doRestoreFiles(final HttpServletRequest request);
 
 	String doCopyFiles(final HttpServletRequest request);
+
+	String doCopySendFiles(final HttpServletRequest request);
 
 	String doSendFiles(final HttpServletRequest request);
 

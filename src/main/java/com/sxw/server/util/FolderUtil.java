@@ -9,6 +9,7 @@ import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.FileSend;
 import com.sxw.server.model.Folder;
 import com.sxw.server.model.Node;
+import com.sxw.server.pojo.FolderSendView;
 import org.springframework.stereotype.*;
 import javax.annotation.*;
 import java.util.*;
@@ -52,23 +53,22 @@ public class FolderUtil {
 		return folderList;
 	}
 
-    public List<Folder> getReceiveParentList(final String fid,final String receiver) {
-        Map<String, String> keyMap0 = new HashMap<>();
-        keyMap0.put("fileId",fid);
-        keyMap0.put("fileReceiver",receiver);
-        FileSend f = this.fsm.queryByFileIdAndReceiver(keyMap0);
+    public List<FolderSendView> getReceiveParentList(final String fid, final String receiver) {
+        FileSend f = this.fsm.queryById(fid);
         final List<String> fsList = new ArrayList<String>();
         if (f != null) {
-            while (!f.getFileParent().equals("receive") && fsList.size() < Integer.MAX_VALUE) {
-                keyMap0.put("fileId",f.getFileParent());
-                f = this.fsm.queryByFileIdAndReceiver(keyMap0);
-                fsList.add(f.getFileId());
+            while (!f.getPid().equals("NULL") && fsList.size() < Integer.MAX_VALUE) {
+                f = this.fsm.queryById(f.getPid());
+                fsList.add(f.getId());
             }
-            fsList.add("receive");
         }
         Collections.reverse(fsList);
-        List<Folder> folderList = fsList.parallelStream().map(folderId -> {
-            return fm.queryById(folderId);
+        List<FolderSendView> folderList = fsList.parallelStream().map(folderId -> {
+			FileSend fs = fsm.queryById(folderId);
+			FolderSendView fsv = new FolderSendView(fm.queryById(fs.getFileId()));
+			fsv.setId(fs.getId());
+			fsv.setPid(fs.getPid());
+            return fsv;
         }).collect(Collectors.toList());
         return folderList;
     }

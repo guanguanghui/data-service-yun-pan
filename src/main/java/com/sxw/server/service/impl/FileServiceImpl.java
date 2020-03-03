@@ -11,6 +11,7 @@ import com.sxw.server.model.Folder;
 import com.sxw.server.model.Node;
 import com.sxw.server.service.FileService;
 import com.sxw.server.util.*;
+import javafx.util.Pair;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.stereotype.*;
@@ -1282,10 +1283,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         if (targetFolder == null) {
             return ERROR_PARAMETER;
         }
-        if (!ConfigureReader.instance().accessFolder(targetFolder, account)) {
+        if (!accessAuthUtil.accessFolder(targetFolder, account)) {
             return NO_AUTHORIZED;
         }
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
+        if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
             return NO_AUTHORIZED;
         }
         try {
@@ -1297,7 +1298,12 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (id == null || id.length() <= 0) {
                     return ERROR_PARAMETER;
                 }
-                final Node node = this.fm.queryById(id);
+                Node node = this.fm.queryById(id);
+                FileSend fileSend = fsm.queryById(id);
+                if (fileSend != null){
+                    node = this.fm.queryById(fileSend.getFileId());
+                }
+                final Node fNode = node;
                 if (node == null) {
                     return ERROR_PARAMETER;
                 }
@@ -1313,13 +1319,300 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 }
                 if (fm.queryByParentFolderId(locationpath).parallelStream()
                         .filter(e -> e.getFileCreator().equals(account))
-                        .anyMatch((e) -> e.getFileName().equals(node.getFileName()))) {
+                        .anyMatch((e) -> e.getFileName().equals(fNode.getFileName()))) {
                     if (optMap.get(id) == null) {
                         return ERROR_PARAMETER;
                     }
                     switch (optMap.get(id)) {
                         case "cover":
                             if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                                    fu.getAllFoldersId(locationpath))) {
+                                return NO_AUTHORIZED;
+                            }
+                            final Node n = fm.queryByParentFolderId(locationpath).parallelStream()
+                                    .filter((e) -> e.getFileName().equals(fNode.getFileName()) && e.getFileCreator().equals(account)).findFirst().get();
+                            if (fm.deleteById(n.getFileId()) > 0) {
+                                node.setFileParentFolder(locationpath);
+                                node.setFileId(UUID.randomUUID().toString());
+                                if (account != null) {
+                                    node.setFileCreator(account);
+                                } else {
+                                    node.setFileCreator("\u533f\u540d\u7528\u6237");
+                                }
+                                node.setFileCreationDate(ServerTimeUtil.accurateToSecond());
+                                int i = 0;
+                                // 尽可能避免UUID重复的情况发生，重试10次
+                                while (true) {
+                                    try {
+                                        if (this.fm.insert(node) > 0) {
+                                            break;
+                                        }
+                                    } catch (Exception e) {
+                                        node.setFileId(UUID.randomUUID().toString());
+                                        i++;
+                                    }
+                                    if (i >= 10) {
+                                        return "cannotCopyFiles";
+                                    }
+                                }
+                            }
+                            this.lu.writeCopyFileEvent(request, node);
+                            break;
+                        case "both":
+                            if (fm.countByParentFolderId(locationpath) >= FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER) {
+                                return FILES_TOTAL_OUT_OF_LIMIT;
+                            }
+                            node.setFileName(FileNodeUtil.getNewNodeName(node.getFileName(),
+                                    fm.queryByParentFolderId(locationpath)));
+                            node.setFileParentFolder(locationpath);
+                            node.setFileId(UUID.randomUUID().toString());
+                            if (account != null) {
+                                node.setFileCreator(account);
+                            } else {
+                                node.setFileCreator("\u533f\u540d\u7528\u6237");
+                            }
+                            node.setFileCreationDate(ServerTimeUtil.accurateToSecond());
+                            int i = 0;
+                            // 尽可能避免UUID重复的情况发生，重试10次
+                            while (true) {
+                                try {
+                                    if (this.fm.insert(node) > 0) {
+                                        break;
+                                    }
+                                } catch (Exception e) {
+                                    node.setFileId(UUID.randomUUID().toString());
+                                    i++;
+                                }
+                                if (i >= 10) {
+                                    return "cannotCopyFiles";
+                                }
+                            }
+
+                            this.lu.writeCopyFileEvent(request, node);
+                            break;
+                        case "skip":
+                            break;
+                        default:
+                            return ERROR_PARAMETER;
+                    }
+                } else {
+                    if (fm.countByParentFolderId(locationpath) >= FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER) {
+                        return FILES_TOTAL_OUT_OF_LIMIT;
+                    }
+                    node.setFileParentFolder(locationpath);
+                    node.setFileId(UUID.randomUUID().toString());
+                    if (account != null) {
+                        node.setFileCreator(account);
+                    } else {
+                        node.setFileCreator("\u533f\u540d\u7528\u6237");
+                    }
+                    node.setFileCreationDate(ServerTimeUtil.accurateToSecond());
+                    int i = 0;
+                    // 尽可能避免UUID重复的情况发生，重试10次
+                    while (true) {
+                        try {
+                            if (this.fm.insert(node) > 0) {
+                                break;
+                            }
+                        } catch (Exception e) {
+                            node.setFileId(UUID.randomUUID().toString());
+                            i++;
+                        }
+                        if (i >= 10) {
+                            return "cannotCopyFiles";
+                        }
+                    }
+                    this.lu.writeCopyFileEvent(request, node);
+                }
+            }
+            final List<String> fidList = gson.fromJson(strFidList, new TypeToken<List<String>>() {
+            }.getType());
+            for (final String fid : fidList) {
+                if (fid == null || fid.length() <= 0) {
+                    return ERROR_PARAMETER;
+                }
+                Folder folder = this.flm.queryById(fid);
+                FileSend folderSend = this.fsm.queryById(fid);
+                if (folderSend != null){
+                    folder = this.flm.queryById(folderSend.getFileId());
+                }
+                 final Folder fFolder = folder;
+
+
+
+                if (folder == null) {
+                    return ERROR_PARAMETER;
+                }
+                if (folder.getFolderParent().equals(locationpath)) {
+                    continue;
+                }
+                if (!accessAuthUtil.accessFolder(folder, account)) {
+                    return NO_AUTHORIZED;
+                }
+                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
+                        fu.getAllFoldersId(folder.getFolderParent()))) {
+                    return NO_AUTHORIZED;
+                }
+                if (fid.equals(locationpath) || fu.getParentList(locationpath).parallelStream()
+                        .anyMatch((e) -> e.getFolderId().equals(fFolder.getFolderId()))) {
+                    return ERROR_PARAMETER;
+                }
+
+                Folder parentFolder = this.flm.queryById(locationpath);
+                int pc = parentFolder.getFolderId().equals("root") ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
+                int folderConstraint = folder.getFolderConstraint();
+                if (flm.queryByParentId(locationpath).parallelStream()
+                        .filter(e -> e.getFolderCreator().equals(account))
+                        .anyMatch((e) -> e.getFolderName().equals(fFolder.getFolderName()))) {
+                    if (optMap.get(fid) == null) {
+                        return ERROR_PARAMETER;
+                    }
+
+                    switch (optMap.get(fid)) {
+                        case "cover":
+                            if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                                    fu.getAllFoldersId(locationpath))) {
+                                return NO_AUTHORIZED;
+                            }
+                            Folder f = flm.queryByParentId(locationpath).parallelStream()
+                                    .filter((e) -> e.getFolderName().equals(fFolder.getFolderName()) && e.getFolderCreator().equals(account)).findFirst().get();
+
+                            folder.setFolderCreationDate(ServerTimeUtil.accurateToSecond());
+                            if (account != null) {
+                                folder.setFolderCreator(account);
+                            } else {
+                                folder.setFolderCreator("匿名用户");
+                            }
+                            folder.setFolderConstraint(pc);
+                            String newFolderId;
+                            if (folderSend != null){
+                                newFolderId = copySendFolderHelp(folderSend, locationpath);
+                            }else {
+                                newFolderId = copyFolderHelp(folder, locationpath);
+                            }
+                            // 设置子文件夹约束等级，子文件夹的约束等于父文件夹
+                            fu.changeChildFolderConstraint(newFolderId, pc);
+                            if (fu.deleteAllChildFolder(f.getFolderId()) > 0) {
+                                this.lu.writeCopyFileEvent(request, folder);
+                                break;
+                            }
+                            return "cannotCopyFiles";
+                        case "both":
+                            if (flm.countByParentId(locationpath) >= FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER) {
+                                return FOLDERS_TOTAL_OUT_OF_LIMIT;
+                            }
+
+                            if (folderConstraint > 0 && account == null) {
+                                return "cannotCopyFolder";
+                            }
+
+                            folder.setFolderName(FileNodeUtil.getNewFolderName(folder.getFolderName(),
+                                    flm.queryByParentId(locationpath)));
+                            folder.setFolderCreationDate(ServerTimeUtil.accurateToSecond());
+                            if (account != null) {
+                                folder.setFolderCreator(account);
+                            } else {
+                                folder.setFolderCreator("匿名用户");
+                            }
+
+                            String newFolderId2;
+                            if (folderSend != null){
+                                newFolderId2 = copySendFolderHelp(folderSend, locationpath);
+                            }else {
+                                newFolderId2 = copyFolderHelp(folder, locationpath);
+                            }
+                            // 设置子文件夹约束等级
+                            fu.changeChildFolderConstraint(newFolderId2, pc);
+                            this.lu.writeCopyFileEvent(request, folder);
+                            break;
+                        case "skip":
+                            break;
+                        default:
+                            return ERROR_PARAMETER;
+                    }
+                } else {
+                    if (flm.countByParentId(locationpath) >= FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER) {
+                        return FOLDERS_TOTAL_OUT_OF_LIMIT;
+                    }
+
+                    // 设置子文件夹约束等级，不允许子文件夹的约束等级比父文件夹低
+                    if (folderConstraint > 0 && account == null) {
+                        return "cannotCopyFolder";
+                    }
+                    folder.setFolderCreationDate(ServerTimeUtil.accurateToSecond());
+                    if (account != null) {
+                        folder.setFolderCreator(account);
+                    } else {
+                        folder.setFolderCreator("匿名用户");
+                    }
+                    String newFolderId;
+                    if (folderSend != null){
+                        newFolderId = copySendFolderHelp(folderSend, locationpath);
+                    }else {
+                        newFolderId = copyFolderHelp(folder, locationpath);
+                    }
+                    fu.changeChildFolderConstraint(newFolderId, pc);
+                }
+            }
+            if (fidList.size() > 0) {
+                ServerInitListener.needCheck = true;
+            }
+            return "copyFilesSuccess";
+        } catch (Exception e) {
+            return ERROR_PARAMETER;
+        }
+    }
+
+    @Override
+    public String doCopySendFiles(HttpServletRequest request){
+        final String strIdList = request.getParameter("strIdList");
+        final String strFidList = request.getParameter("strFidList");
+        final String strOptMap = request.getParameter("strOptMap");
+        final String locationpath = request.getParameter("locationpath");
+        final String account = (String) request.getSession().getAttribute("ACCOUNT");
+        Folder targetFolder = flm.queryById(locationpath);
+        if (targetFolder == null) {
+            return ERROR_PARAMETER;
+        }
+        if (!accessAuthUtil.accessFolder(targetFolder, account)) {
+            return NO_AUTHORIZED;
+        }
+        if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
+            return NO_AUTHORIZED;
+        }
+        try {
+            final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
+            }.getType());
+            final Map<String, String> optMap = gson.fromJson(strOptMap, new TypeToken<Map<String, String>>() {
+            }.getType());
+            for (final String id : idList) {
+                if (id == null || id.length() <= 0) {
+                    return ERROR_PARAMETER;
+                }
+                final FileSend fileSend = fsm.queryById(id);
+                final Node node = this.fm.queryById(fileSend.getFileId());
+                if (node == null) {
+                    return ERROR_PARAMETER;
+                }
+                if (node.getFileParentFolder().equals(locationpath)) {
+                    continue;
+                }
+                if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
+                    return NO_AUTHORIZED;
+                }
+                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
+                        fu.getAllFoldersId(node.getFileParentFolder()))) {
+                    return NO_AUTHORIZED;
+                }
+                if (fm.queryByParentFolderId(locationpath).parallelStream()
+                        .filter(e -> e.getFileCreator().equals(account))
+                        .anyMatch((e) -> e.getFileName().equals(node.getFileName()))) {
+                    if (optMap.get(id) == null) {
+                        return ERROR_PARAMETER;
+                    }
+                    switch (optMap.get(id)) {
+                        case "cover":
+                            if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                                     fu.getAllFoldersId(locationpath))) {
                                 return NO_AUTHORIZED;
                             }
@@ -1425,17 +1718,18 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (fid == null || fid.length() <= 0) {
                     return ERROR_PARAMETER;
                 }
-                final Folder folder = this.flm.queryById(fid);
+                final FileSend fileSend = this.fsm.queryById(fid);
+                final Folder folder = this.flm.queryById(fileSend.getFileId());
                 if (folder == null) {
                     return ERROR_PARAMETER;
                 }
                 if (folder.getFolderParent().equals(locationpath)) {
                     continue;
                 }
-                if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.COPY_FILES,
+                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
                         fu.getAllFoldersId(folder.getFolderParent()))) {
                     return NO_AUTHORIZED;
                 }
@@ -1456,7 +1750,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     switch (optMap.get(fid)) {
                         case "cover":
-                            if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                            if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                                     fu.getAllFoldersId(locationpath))) {
                                 return NO_AUTHORIZED;
                             }
@@ -1471,7 +1765,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                                 folder.setFolderCreator("匿名用户");
                             }
                             folder.setFolderConstraint(pc);
-                            String newFolderId = copyFolderHelp(folder, locationpath);
+                            String newFolderId = copySendFolderHelp(fileSend, locationpath);
                             // 设置子文件夹约束等级，子文件夹的约束等于父文件夹
                             fu.changeChildFolderConstraint(newFolderId, pc);
                             if (fu.deleteAllChildFolder(f.getFolderId()) > 0) {
@@ -1497,7 +1791,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                                 folder.setFolderCreator("匿名用户");
                             }
 
-                            String newFolderId2 = copyFolderHelp(folder, locationpath);
+                            String newFolderId2 = copySendFolderHelp(fileSend, locationpath);
                             // 设置子文件夹约束等级
                             fu.changeChildFolderConstraint(newFolderId2, pc);
                             this.lu.writeCopyFileEvent(request, folder);
@@ -1522,7 +1816,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     } else {
                         folder.setFolderCreator("匿名用户");
                     }
-                    String newFolderId = copyFolderHelp(folder, locationpath);
+                    String newFolderId = copySendFolderHelp(fileSend, locationpath);
                     fu.changeChildFolderConstraint(newFolderId, pc);
                 }
             }
@@ -1534,6 +1828,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
             return ERROR_PARAMETER;
         }
     }
+
 
     // 发送文件前的确认检查 （发送文件的前置操作）
     @Override
@@ -1619,15 +1914,87 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
     }
 
+    private String copySendFolderHelp(FileSend fs, String newFolderParent) {
+        String receiver = fs.getFileReceiver();
+        List<String> ipPidList = fsm.queryFileSendTree(receiver);
+        Folder folder = flm.queryById(fs.getFileId());
+        String account = folder.getFolderCreator();
+        ConcurrentHashMap<String, String> data = new ConcurrentHashMap<>();
+        ipPidList.stream().parallel().forEach(e -> {
+            String[] idPid = e.split(",");
+            String id = idPid[0];
+            String pid = idPid[1];
+            data.put(id, pid);
+        });
+        NodeTreeUtil.TagTreeNode rootNode = NodeTreeUtil.TreeBuilder.createOneTree(data, fs.getId());
+
+        folder.setFolderParent(newFolderParent);
+        folder.setFolderCreator(receiver);
+        String newFolderId = UUID.randomUUID().toString();
+        folder.setFolderId(newFolderId);
+        flm.insertNewFolder(folder);
+        Pair<String,NodeTreeUtil.TagTreeNode> rootPair = new Pair<>(newFolderId,rootNode);
+
+        Queue<Pair<String,NodeTreeUtil.TagTreeNode>> queue = new LinkedList<>();
+        queue.add(rootPair);
+        while (!queue.isEmpty()) {
+            Pair<String,NodeTreeUtil.TagTreeNode> pair = queue.poll();
+            Enumeration<NodeTreeUtil.TagTreeNode> childs = pair.getValue().children();
+            while (childs.hasMoreElements()) {
+                NodeTreeUtil.TagTreeNode child = childs.nextElement();
+                Pair<String,NodeTreeUtil.TagTreeNode> childPair;
+                NodeTreeUtil.Tag childTag = (NodeTreeUtil.Tag) child.getUserObject();
+                if (!child.isLeaf()) {
+                    String childId = childTag.getId();
+                    FileSend childFileSend = fsm.queryById(childId);
+                    String childFolderId = childFileSend.getFileId();
+                    Folder childFolder = flm.queryById(childFolderId);
+                    String newChildFolderId = UUID.randomUUID().toString();
+                    childFolder.setFolderId(newChildFolderId);
+                    childFolder.setFolderCreator(receiver);
+                    childFolder.setFolderParent(pair.getKey());
+                    flm.insertNewFolder(childFolder);
+                    childPair = new Pair<>(newChildFolderId, child);
+                } else {
+                    String childId = childTag.getId();
+                    FileSend childFileSend = fsm.queryById(childId);
+                    if (childFileSend.getFileType().equals(FileSendType.FILE.getName())) {
+                        Node childFile = fm.queryById(childFileSend.getFileId());
+                        String newChildFileId = UUID.randomUUID().toString();
+                        childFile.setFileId(newChildFileId);
+                        childFile.setFileCreator(receiver);
+                        childFile.setFileParentFolder(pair.getKey());
+                        fm.insert(childFile);
+                         childPair = new Pair<>(newChildFileId, child);
+                    } else {
+                        String childFolderId = childFileSend.getFileId();
+                        Folder childFolder = flm.queryById(childFolderId);
+                        String newChildFolderId = UUID.randomUUID().toString();
+                        childFolder.setFolderId(newChildFolderId);
+                        childFolder.setFolderCreator(account);
+                        childFolder.setFolderParent(pair.getKey());
+                        flm.insertNewFolder(childFolder);
+                        childPair = new Pair<>(newChildFolderId, child);
+                    }
+                }
+                queue.add(childPair);
+            }
+        }
+        return newFolderId;
+    }
+
+
     @Override
     public String doSendFiles(HttpServletRequest request) {
         final String strIdList = request.getParameter("strIdList");
         final String strFidList = request.getParameter("strFidList");
         final String fileReceiver = request.getParameter("fileReceiver");
         final String account = (String) request.getSession().getAttribute("ACCOUNT");
-        Map<String, String> key = new HashMap<String, String>();
-        key.put("fileSender", account);
+        Map<String, Object> key = new HashMap<>();
+        key.put("pid", "receive");
         key.put("fileReceiver", fileReceiver);
+        key.put("offset", 0L);
+        key.put("rows", Integer.MAX_VALUE);
 
         try {
             final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
@@ -1636,7 +2003,14 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (id == null || id.length() <= 0) {
                     return ERROR_PARAMETER;
                 }
-                final Node node = this.fm.queryById(id);
+                // 包含在自身文件空间里面和收到文件空间两种情况
+                Node node;
+                FileSend fileSend = this.fsm.queryById(id);
+                if(fileSend != null){
+                    node = this.fm.queryById(fileSend.getFileId());
+                }else{
+                    node = this.fm.queryById(id);
+                }
                 if (node == null) {
                     return ERROR_PARAMETER;
                 }
@@ -1650,6 +2024,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                 FileSend fs = new FileSend();
                 fs.setId(UUID.randomUUID().toString());
+                fs.setPid("receive");
                 fs.setFileId(id);
                 fs.setFileName(node.getFileName());
                 fs.setFileParent("receive");
@@ -1658,7 +2033,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 fs.setFileReceiver(fileReceiver);
                 fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
                 fs.setFileType(FileSendType.FILE.getName());
-                Stream<FileSend> fileSends = fsm.queryBySenderAndReceiver(key).parallelStream()
+                Stream<FileSend> fileSends = fsm.queryByReceiver(key).parallelStream()
                         .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()));
                 if (fileSends.anyMatch(e -> e.getFileName().equals(node.getFileName()))) {
                     // 文件名重复的处理
@@ -1673,7 +2048,14 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (fid == null || fid.length() <= 0) {
                     return ERROR_PARAMETER;
                 }
-                final Folder folder = this.flm.queryById(fid);
+                Folder folder;
+                FileSend folderSend = this.fsm.queryById(fid);
+                if (folderSend != null){
+                    folder = this.flm.queryById(folderSend.getFileId());
+                }else{
+                    folder = this.flm.queryById(fid);
+                }
+
                 if (folder == null) {
                     return ERROR_PARAMETER;
                 }
@@ -1687,6 +2069,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                 FileSend fs = new FileSend();
                 fs.setId(UUID.randomUUID().toString());
+                fs.setPid("receive");
                 fs.setFileId(fid);
                 fs.setFileName(folder.getFolderName());
                 fs.setFileParent("receive");
@@ -1696,12 +2079,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
                 fs.setFileType(FileSendType.FOLDER.getName());
 
-                Map<String, Object> key0 = new HashMap<>();
-                key0.put("fileParent", "receive");
-                key0.put("fileReceiver", fileReceiver);
-                key0.put("offset", 0L);
-                key0.put("rows", Integer.MAX_VALUE);
-                List<FileSend> folderSends = fsm.queryByReceiver(key0).parallelStream()
+                List<FileSend> folderSends = fsm.queryByReceiver(key).parallelStream()
                         .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName())).collect(Collectors.toList());
 
                 if (folderSends.stream().anyMatch((e) -> e.getFileName().equals(folder.getFolderName()))) {
@@ -1723,7 +2101,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
     private void doSendFolderHelp(FileSend folder,String owner) {
         String receiver = folder.getFileReceiver();
         List<String> ipPidList = fm.queryNodeTree(owner);
-        ConcurrentHashMap<String, String> data = new ConcurrentHashMap<String, String>();
+        ConcurrentHashMap<String, String> data = new ConcurrentHashMap<>();
         ipPidList.stream().parallel().forEach(e -> {
             String[] idPid = e.split(",");
             String id = idPid[0];
@@ -1732,21 +2110,23 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         });
         // 以传入的folder为树的根节点
         NodeTreeUtil.TagTreeNode rootNode = NodeTreeUtil.TreeBuilder.createOneTree(data, folder.getFileId());
-
+        Pair<String,NodeTreeUtil.TagTreeNode> rootPair = new Pair<>(folder.getId(),rootNode);
         fsm.insert(folder);
 
-        Queue<NodeTreeUtil.TagTreeNode> queue = new LinkedList<>();
-        queue.add(rootNode);
+        //Queue<NodeTreeUtil.TagTreeNode> queue = new LinkedList<>();
+        Queue<Pair<String,NodeTreeUtil.TagTreeNode>> queue = new LinkedList<>();
+        queue.add(rootPair);
 
         FileSend fs = new FileSend();
         fs.setFileSender(folder.getFileSender());
         fs.setFileReceiver(receiver);
         fs.setFileSendDate(folder.getFileSendDate());
         fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
-
         while (!queue.isEmpty()) {
-            NodeTreeUtil.TagTreeNode node = queue.poll();
-            Enumeration<NodeTreeUtil.TagTreeNode> childs = node.children();
+            // NodeTreeUtil.TagTreeNode node = queue.poll();
+            Pair<String,NodeTreeUtil.TagTreeNode> nodePair = queue.poll();
+            String pid = nodePair.getKey();
+            Enumeration<NodeTreeUtil.TagTreeNode> childs = nodePair.getValue().children();
             while (childs.hasMoreElements()) {
                 NodeTreeUtil.TagTreeNode child = childs.nextElement();
                 NodeTreeUtil.Tag childTag = (NodeTreeUtil.Tag) child.getUserObject();
@@ -1757,6 +2137,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                 String newChildFileSendId = UUID.randomUUID().toString();
                 fs.setId(newChildFileSendId);
+                fs.setPid(pid);
                 fs.setFileId(childTagId);
                 fs.setFileParent(childTag.getPid());
                 if (childFolder != null){
@@ -1770,7 +2151,8 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 }
 
                 fsm.insert(fs);
-                queue.add(child);
+                // queue.add(child);
+                queue.add(new Pair<>(newChildFileSendId,child));
             }
         }
     }
@@ -1980,7 +2362,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         Folder targetFolder = flm.queryById(locationpath);
         int needCopyfilesCount = 0;
         int needCopyFoldersCount = 0;
-        if (ConfigureReader.instance().accessFolder(targetFolder, account) && ConfigureReader.instance()
+        if (accessAuthUtil.accessFolder(targetFolder, account) && accessAuthUtil
                 .authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
             try {
                 final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
@@ -1993,7 +2375,12 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (fileId == null || fileId.length() <= 0) {
                         return ERROR_PARAMETER;
                     }
-                    final Node node = this.fm.queryById(fileId);
+                    Node node = this.fm.queryById(fileId);
+                    FileSend fileSend = this.fsm.queryById(fileId);
+                    if (fileSend != null){
+                        node = this.fm.queryById(fileSend.getFileId());
+                    }
+                    final Node fNode = node;
                     if (node == null) {
                         return ERROR_PARAMETER;
                     }
@@ -2009,7 +2396,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     }
                     if (fm.queryByParentFolderId(locationpath).parallelStream()
                             .filter(e -> e.getFileCreator().equals(account))
-                            .anyMatch((e) -> e.getFileName().equals(node.getFileName()))) {
+                            .anyMatch((e) -> e.getFileName().equals(fNode.getFileName()))) {
                         repeNodes.add(node);
                     } else {
                         needCopyfilesCount++;
@@ -2019,7 +2406,12 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (folderId == null || folderId.length() <= 0) {
                         return ERROR_PARAMETER;
                     }
-                    final Folder folder = this.flm.queryById(folderId);
+                    Folder folder = this.flm.queryById(folderId);
+                    FileSend fileSend = this.fsm.queryById(folderId);
+                    if (fileSend != null){
+                        folder = this.flm.queryById(fileSend.getFileId());
+                    }
+                    final Folder fFolder = folder;
                     if (folder == null) {
                         return ERROR_PARAMETER;
                     }
@@ -2030,6 +2422,105 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                         return NO_AUTHORIZED;
                     }
                     if (!ConfigureReader.instance().authorized(account, AccountAuth.COPY_FILES,
+                            fu.getAllFoldersId(folder.getFolderParent()))) {
+                        return NO_AUTHORIZED;
+                    }
+                    if (folderId.equals(locationpath) || fu.getParentList(locationpath).parallelStream()
+                            .anyMatch((e) -> e.getFolderId().equals(fFolder.getFolderId()))) {
+                        return "CANT_COPY_TO_INSIDE:" + folder.getFolderName();
+                    }
+                    if (flm.queryByParentId(locationpath).parallelStream()
+                            .filter(e -> e.getFolderCreator().equals(account))
+                            .anyMatch((e) -> e.getFolderName().equals(fFolder.getFolderName()))) {
+                        repeFolders.add(folder);
+                    } else {
+                        needCopyFoldersCount++;
+                    }
+                }
+                long estimateFilesTotal = fm.countByParentFolderId(locationpath) + needCopyfilesCount;
+                if (estimateFilesTotal > FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER || estimateFilesTotal < 0) {
+                    return FILES_TOTAL_OUT_OF_LIMIT;
+                }
+                long estimateFoldersTotal = flm.countByParentId(locationpath) + needCopyFoldersCount;
+                if (estimateFoldersTotal > FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER || estimateFoldersTotal < 0) {
+                    return FOLDERS_TOTAL_OUT_OF_LIMIT;
+                }
+                if (repeNodes.size() > 0 || repeFolders.size() > 0) {
+                    Map<String, List<? extends Object>> repeMap = new HashMap<>();
+                    repeMap.put("repeFolders", repeFolders);
+                    repeMap.put("repeNodes", repeNodes);
+                    return "duplicationFileName:" + gson.toJson(repeMap);
+                }
+                return "confirmCopyFiles";
+            } catch (Exception e) {
+                return ERROR_PARAMETER;
+            }
+        }
+        return NO_AUTHORIZED;
+    }
+
+    // 复制收到文件中的文件前的确认检查（可视作复制的前置操作）
+    @Override
+    public String confirmCopySendFiles(HttpServletRequest request) {
+        final String strIdList = request.getParameter("strIdList");
+        final String strFidList = request.getParameter("strFidList");
+        final String locationpath = request.getParameter("locationpath");
+        final String account = (String) request.getSession().getAttribute("ACCOUNT");
+        Folder targetFolder = flm.queryById(locationpath);
+        int needCopyfilesCount = 0;
+        int needCopyFoldersCount = 0;
+        if (accessAuthUtil.accessFolder(targetFolder, account) && accessAuthUtil
+                .authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
+            try {
+                final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
+                }.getType());
+                final List<String> fidList = gson.fromJson(strFidList, new TypeToken<List<String>>() {
+                }.getType());
+                List<Node> repeNodes = new ArrayList<>();
+                List<Folder> repeFolders = new ArrayList<>();
+                for (final String fileId : idList) {
+                    if (fileId == null || fileId.length() <= 0) {
+                        return ERROR_PARAMETER;
+                    }
+                    FileSend fileSend = this.fsm.queryById(fileId);
+                    final Node node = this.fm.queryById(fileSend.getFileId());
+                    if (node == null) {
+                        return ERROR_PARAMETER;
+                    }
+                    if (node.getFileParentFolder().equals(locationpath)) {
+                        continue;
+                    }
+                    if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
+                        return NO_AUTHORIZED;
+                    }
+                    if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
+                            fu.getAllFoldersId(node.getFileParentFolder()))) {
+                        return NO_AUTHORIZED;
+                    }
+                    if (fm.queryByParentFolderId(locationpath).parallelStream()
+                            .filter(e -> e.getFileCreator().equals(account))
+                            .anyMatch((e) -> e.getFileName().equals(node.getFileName()))) {
+                        repeNodes.add(node);
+                    } else {
+                        needCopyfilesCount++;
+                    }
+                }
+                for (final String folderId : fidList) {
+                    if (folderId == null || folderId.length() <= 0) {
+                        return ERROR_PARAMETER;
+                    }
+                    FileSend folderSend = this.fsm.queryById(folderId);
+                    final Folder folder = this.flm.queryById(folderSend.getFileId());
+                    if (folder == null) {
+                        return ERROR_PARAMETER;
+                    }
+                    if (folder.getFolderParent().equals(locationpath)) {
+                        continue;
+                    }
+                    if (!accessAuthUtil.accessFolder(folder, account)) {
+                        return NO_AUTHORIZED;
+                    }
+                    if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
                             fu.getAllFoldersId(folder.getFolderParent()))) {
                         return NO_AUTHORIZED;
                     }
@@ -2066,6 +2557,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
         return NO_AUTHORIZED;
     }
+
 
     // 上传文件夹的先行检查
     @Override
