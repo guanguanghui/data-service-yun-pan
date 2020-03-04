@@ -32,7 +32,7 @@ import com.sxw.server.util.ContentTypeMap;
 import com.sxw.server.util.Docx2PDFUtil;
 import com.sxw.server.util.FileBlockUtil;
 import com.sxw.server.util.FolderUtil;
-import com.sxw.server.util.KiftdFFMPEGLocator;
+import com.sxw.server.util.SxwFFMPEGLocator;
 import com.sxw.server.util.LogUtil;
 import com.sxw.server.util.NoticeUtil;
 import com.sxw.server.util.PowerPoint2PDFUtil;
@@ -69,7 +69,7 @@ public class ResourceServiceImpl implements ResourceService {
 	@Resource
 	private ContentTypeMap ctm;
 	@Resource
-	private KiftdFFMPEGLocator kfl;
+	private SxwFFMPEGLocator kfl;
 
 	// 提供资源的输出流，原理与下载相同，但是个别细节有区别
 	@Override

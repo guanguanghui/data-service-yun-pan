@@ -8,7 +8,7 @@ import com.sxw.server.pojo.*;
 import com.sxw.server.service.FolderViewService;
 import com.sxw.server.util.ConfigureReader;
 import com.sxw.server.util.FolderUtil;
-import com.sxw.server.util.KiftdFFMPEGLocator;
+import com.sxw.server.util.SxwFFMPEGLocator;
 import com.sxw.server.util.ServerTimeUtil;
 import org.springframework.stereotype.*;
 import javax.annotation.*;
@@ -40,7 +40,9 @@ public class FolderViewServiceImpl implements FolderViewService {
     @Resource
     private Gson gson;
     @Resource
-    private KiftdFFMPEGLocator kfl;
+    private SxwFFMPEGLocator kfl;
+    @Resource
+    private AccessAuthUtil accessAuthUtil;
 
     @Override
     public String getFolderViewToJson(final String fid, final HttpSession session, final HttpServletRequest request) {
@@ -54,7 +56,7 @@ public class FolderViewServiceImpl implements FolderViewService {
         }
         final String account = (String) session.getAttribute("ACCOUNT");
         // 检查访问文件夹视图请求是否合法
-        if (!ConfigureReader.instance().accessFolder(vf, account)) {
+        if (!accessAuthUtil.accessFolder(vf, account)) {
             return "notAccess";// 如无访问权限则直接返回该字段，令页面回到ROOT视图。
         }
         final FolderView fv = new FolderView();
@@ -70,7 +72,7 @@ public class FolderViewServiceImpl implements FolderViewService {
         keyMap1.put("rows", SELECT_STEP);
         List<Folder> folders = this.fm.queryByParentIdSection(keyMap1);
         List<Folder> fs = folders.parallelStream().filter(f -> {
-            return ConfigureReader.instance().accessFolder(f, account);
+            return accessAuthUtil.accessFolder(f, account);
         }).collect(Collectors.toList());
 
         fv.setFolderList(fs);
@@ -81,7 +83,10 @@ public class FolderViewServiceImpl implements FolderViewService {
         long fiOffset = filesOffset - SELECT_STEP;
         keyMap2.put("offset", fiOffset > 0L ? fiOffset : 0L);
         keyMap2.put("rows", SELECT_STEP);
-        fv.setFileList(this.flm.queryByParentFolderIdSection(keyMap2));
+        List<Node> files = this.flm.queryByParentFolderIdSection(keyMap2).stream().filter(
+                e -> e.getFileCreator().equals(account)
+        ).collect(Collectors.toList());
+        fv.setFileList(files);
         if (account != null) {
             fv.setAccount(account);
         }

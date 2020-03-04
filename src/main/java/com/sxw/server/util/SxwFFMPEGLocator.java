@@ -6,14 +6,12 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-
 import com.sxw.printer.Printer;
 import org.springframework.stereotype.Component;
-
 import ws.schild.jave.FFMPEGLocator;
 
 @Component
-public class KiftdFFMPEGLocator extends FFMPEGLocator {
+public class SxwFFMPEGLocator extends FFMPEGLocator {
 	
 	/**
 	 * 内置的ffmpeg引擎的版本号，应该与jave整合资源本身自带的ffmpeg引擎版本对应
@@ -34,7 +32,7 @@ public class KiftdFFMPEGLocator extends FFMPEGLocator {
 	 * 
 	 * @author ggh@sxw.cn
 	 */
-	public KiftdFFMPEGLocator() {
+	public SxwFFMPEGLocator() {
 		// 首先检查是否启用了在线解码功能，如果没有启用则无需初始化ffmpeg引擎
 		if (!ConfigureReader.instance().isEnableFFMPEG()) {
 			return;

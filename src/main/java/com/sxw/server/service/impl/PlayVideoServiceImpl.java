@@ -39,7 +39,7 @@ public class PlayVideoServiceImpl implements PlayVideoService {
 	@Resource
 	private FolderUtil fu;
 	@Resource
-	private KiftdFFMPEGLocator kfl;
+	private SxwFFMPEGLocator kfl;
 
 	private VideoInfo foundVideo(final HttpServletRequest request) {
 		final String fileId = request.getParameter("fileId");

@@ -36,7 +36,7 @@ public class VideoTranscodeUtil {
 	@Resource
 	private NodeMapper nm;
 	@Resource
-	private KiftdFFMPEGLocator kfl;
+	private SxwFFMPEGLocator kfl;
 
 	public static Map<String, VideoTranscodeThread> videoTranscodeThreads = new HashMap<>();
 

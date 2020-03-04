@@ -49,9 +49,14 @@ public class WelcomeController {
 		} catch (BusinessException e){
 			return "redirect:" + ConfigureReader.instance().getLoginUrl();
 		}
-		catch (Exception e) {
+		catch (ArrayIndexOutOfBoundsException e) {
+			// 对应无token登陆
 			lu.writeException(e);
-			return "redirect:/home.html";
+			return "redirect:" + ConfigureReader.instance().getLoginUrl();
+		}catch (Exception e) {
+			// 对应其他异常
+			lu.writeException(e);
+			return "redirect:"  + ConfigureReader.instance().getLoginUrl();
 		}
 		return "redirect:/home.html";
 	}

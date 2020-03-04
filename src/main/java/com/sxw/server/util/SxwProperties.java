@@ -27,7 +27,7 @@ import java.util.Set;
  * @author ggh@sxw.cn
  * @version 1.0
  */
-public class KiftdProperties {
+public class SxwProperties {
 
 	private List<LineContext> contexts = new ArrayList<>();// 保存载入的整个文本信息
 	private Map<String, String> properties = new HashMap<>();// 仅保存配置信息，用于提高查询效率

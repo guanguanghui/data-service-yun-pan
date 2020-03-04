@@ -2070,7 +2070,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 FileSend fs = new FileSend();
                 fs.setId(UUID.randomUUID().toString());
                 fs.setPid("receive");
-                fs.setFileId(fid);
+                fs.setFileId(folder.getFolderId());
                 fs.setFileName(folder.getFolderName());
                 fs.setFileParent("receive");
                 fs.setFileSendDate(ServerTimeUtil.accurateToSecond());

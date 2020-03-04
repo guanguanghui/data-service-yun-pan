@@ -9,9 +9,6 @@ import com.sxw.server.enumeration.VCLevel;
 import com.sxw.server.model.Folder;
 import com.sxw.server.pojo.ExtendStores;
 import com.sxw.server.pojo.ServerSetting;
-import com.sxw.printer.*;
-import com.sxw.server.enumeration.*;
-import com.sxw.server.pojo.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,8 +34,8 @@ public class ConfigureReader {
 
 	public static final int INVALID_DOWNLOAD_ZIP_SETTING = 15;
 	private static ConfigureReader cr;// 自体实体
-	private KiftdProperties serverp;// 配置设置
-	private KiftdProperties accountp;// 账户设置
+	private SxwProperties serverp;// 配置设置
+	private SxwProperties accountp;// 账户设置
 	private int propertiesStatus;// 当前配置检查结果
 	private String path;// 程序主目录路径
 	private String fileSystemPath;// 主文件系统路径
@@ -121,8 +118,8 @@ public class ConfigureReader {
 		}
 		this.DEFAULT_FILE_SYSTEM_PATH = this.path + File.separator + "filesystem" + File.separator;
 		this.confdir = this.path + File.separator + "conf" + File.separator;
-		this.serverp = new KiftdProperties();
-		this.accountp = new KiftdProperties();
+		this.serverp = new SxwProperties();
+		this.accountp = new SxwProperties();
 		extendStores = new ArrayList<>();
 		ipRoster = new TreeSet<>();
 		final File serverProp = new File(this.confdir + SERVER_PROPERTIES_FILE);
