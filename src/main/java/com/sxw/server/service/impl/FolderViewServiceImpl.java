@@ -72,7 +72,7 @@ public class FolderViewServiceImpl implements FolderViewService {
         keyMap1.put("rows", SELECT_STEP);
         List<Folder> folders = this.fm.queryByParentIdSection(keyMap1);
         List<Folder> fs = folders.parallelStream().filter(f -> {
-            return accessAuthUtil.accessFolder(f, account);
+            return accessAuthUtil.accessViewFolder(f, account);
         }).collect(Collectors.toList());
 
         fv.setFolderList(fs);
@@ -84,7 +84,7 @@ public class FolderViewServiceImpl implements FolderViewService {
         keyMap2.put("offset", fiOffset > 0L ? fiOffset : 0L);
         keyMap2.put("rows", SELECT_STEP);
         List<Node> files = this.flm.queryByParentFolderIdSection(keyMap2).stream().filter(
-                e -> e.getFileCreator().equals(account)
+                e -> accessAuthUtil.accessViewFile(e,account)
         ).collect(Collectors.toList());
         fv.setFileList(files);
         if (account != null) {
@@ -147,13 +147,14 @@ public class FolderViewServiceImpl implements FolderViewService {
         // 初始化的收到文件根视图: receive
         FileSend fs = this.fsm.queryById(fid);
         Folder vf = this.fm.queryById(fs.getFileId());
+        if (vf == null) {
+            return "NOT_FOUND";// 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
+        }
         FolderSendView fsv = new FolderSendView(vf);
         fsv.setId(fs.getId());
         fsv.setPid(fs.getPid());
 
-        if (vf == null) {
-            return "NOT_FOUND";// 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
-        }
+
 
         final FolderReceiveView fv = new FolderReceiveView();
         fv.setSelectStep(SELECT_STEP);// 返回查询步长
@@ -175,10 +176,18 @@ public class FolderViewServiceImpl implements FolderViewService {
                 .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName()))
                 .map(e -> {
                     Folder folder = fm.queryById(e.getFileId());
-                    // folder.setFolderParent(fid);
-                    folder.setFolderName(e.getFileName());
+                    // 如果文件夹被删除
+                    if(folder == null){
+                        folder = new Folder();
+                        folder.setFolderId(e.getFileId());
+                        folder.setFolderParent(e.getFileParent());
+                        folder.setFolderName(e.getFileName() + "    （文件夹已被删除，失效！）");
+                    }else {
+                        folder.setFolderName(e.getFileName());
+                    }
                     folder.setFolderCreator(e.getFileSender());
                     folder.setFolderCreationDate(e.getFileSendDate());
+
                     FolderSendView fsv0 = new FolderSendView(folder);
                     fsv0.setId(e.getId());
                     fsv0.setPid(e.getPid());
@@ -188,10 +197,16 @@ public class FolderViewServiceImpl implements FolderViewService {
                 .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
                 .map(e -> {
                     Node node = flm.queryById(e.getFileId());
-                    // node.setFileParentFolder(fid);
+                    if(node == null){
+                        node = new Node();
+                        node.setFileId(e.getFileId());
+                        node.setFileParentFolder(e.getFileParent());
+                        node.setFileSize("（文件已被删除，失效！）");
+
+                    }
                     node.setFileName(e.getFileName());
-                    node.setFileCreator(e.getFileSender());
                     node.setFileCreationDate(e.getFileSendDate());
+                    node.setFileCreator(e.getFileSender());
                     FileSendView fsv1 = new FileSendView(node);
                     fsv1.setId(e.getId());
                     fsv1.setPid(e.getPid());
@@ -224,9 +239,6 @@ public class FolderViewServiceImpl implements FolderViewService {
             }
         }
 
-        if (cr.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER, fu.getAllFoldersId(fid))) {
-            authList.add("D");
-        }
         if (cr.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(fid))) {
             authList.add("P");
         }

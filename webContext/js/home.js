@@ -298,6 +298,9 @@ $(function() {
 //                    }
                     restoreMultiFiles();
 				    break;
+				case 83:
+				    $('#sendFilesButtonLi a').click();
+				    break;
 				case 88:
 					if((!$("#cutSignTx").hasClass("cuted"))&&checkedMovefiles==undefined){
 						$('#cutFileButtonLi a').click();
@@ -2052,7 +2055,7 @@ function sendFiles(){
         	$('#receiverAlert').show();
         	$('#receiverAlert').text("提示：出现意外错误，可能未能发送全部文件");
         }
-    },);
+    });
 }
 
 // 显示发送文件模态框
@@ -4655,6 +4658,7 @@ function reallyiteratorImport(i,newFolderName){
 		
 		fd.append("file", uploadfile);// 将文件对象添加到FormData对象中，字段名为uploadfile
 		fd.append("folderId", locationpath);
+		fd.append("originalFileName", fname);
 		fd.append("folderConstraint",fc);
 		if(!!newFolderName){
 			fd.append("newFolderName",newFolderName);
