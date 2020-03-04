@@ -647,7 +647,6 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (this.fm.update(file) > 0) {
                     // 日志记录
                     this.lu.writeDeleteFileEvent(request, file);
-                    return "deleteFileSuccess";
                 } else {
                     return "cannotDeleteFile";
                 }
