@@ -89,7 +89,7 @@ public class Main {
             }
         }
 
-        public static void main(String[] args){
+        public static void main5(String[] args){
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNext()){
                 String str = scanner.nextLine();
@@ -100,5 +100,59 @@ public class Main {
                 }
             }
         }
+
+    public static void main6(String[] args){
+//        Scanner sc = new Scanner(System.in);
+//        while(sc.hasNext()){
+//            Float num = sc.nextFloat();
+//            System.out.println(num.intValue() + (int)((num-num.intValue())*10)/5);
+//        }
+
+        Scanner sc = new Scanner(System.in);
+        int num = Integer.valueOf(sc.nextLine());
+        Map<Integer,Integer> map = new HashMap<>();
+        for(int i=0;i<num;i++){
+            String line = sc.nextLine();
+            String[]pair = line.split("\\s+");
+            Integer key = Integer.valueOf(pair[0]);
+            Integer value = Integer.valueOf(pair[1]);
+            value = map.get(key)!=null? value+map.get(key):value;
+            map.put(key,value);
+        }
+//        Integer[] keys = (Integer[]) map.keySet().toArray();
+//        Arrays.sort(keys);
+        for(Integer e: map.keySet()){
+            System.out.println(e + " " + map.get(e));
+        }
+    }
+
+    public static void reverse(int num){
+        LinkedHashSet<Integer> list = new LinkedHashSet<>();
+        while(num%10 != 0){
+            list.add(num%10);
+            num = num/10;
+        }
+        for(Integer e:list){
+            System.out.print(e);
+        }
+    }
+
+    public static void main7(String[] args){
+        Scanner sc = new Scanner(System.in);
+        int num = Integer.valueOf(sc.nextLine());
+        reverse(num);
+    }
+
+    public static void main8(String[] args){
+        Scanner sc = new Scanner(System.in);
+        String line = sc.nextLine();
+        HashSet<Character> set = new HashSet<>();
+        for(Character e: line.toCharArray()){
+            if (e.charValue() != 10){
+                set.add(e);
+            }
+        }
+        System.out.println(set.size());
+    }
 
 }

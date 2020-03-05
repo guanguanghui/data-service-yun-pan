@@ -8,7 +8,6 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
-
 import com.sxw.printer.Printer;
 import com.sxw.server.model.FileSend;
 import com.sxw.server.model.Folder;
@@ -68,8 +67,8 @@ public class FileNodeUtil {
 					if (rs.getInt(1) == 0) {
 						final Statement state11 = conn.createStatement();
 						state11.execute("INSERT INTO FOLDER VALUES('root', 'ROOT', '--', '--', 'null', 0, 'false')");
-						state11.execute("INSERT INTO FOLDER VALUES('recycle', '回收站', '--', '--', 'NULL', 2, 'true')");
-						state11.execute("INSERT INTO FOLDER VALUES('receive', '收到文件', '--', '--', 'NULL', 2, 'true')");
+						state11.execute("INSERT INTO FOLDER VALUES('recycle', '回收站', '--', '--', 'NULL', 2, 'false')");
+						state11.execute("INSERT INTO FOLDER VALUES('receive', '收到文件', '--', '--', 'NULL', 2, 'false')");
 					}
 				}
 				state1.close();

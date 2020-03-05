@@ -1306,13 +1306,13 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (node == null) {
                     return ERROR_PARAMETER;
                 }
-                if (node.getFileParentFolder().equals(locationpath)) {
+                if (node.getFileParentFolder().equals(locationpath) && node.getFileCreator().equals(account)) {
                     continue;
                 }
-                if (!ConfigureReader.instance().accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
+                if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.COPY_FILES,
+                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
                         fu.getAllFoldersId(node.getFileParentFolder()))) {
                     return NO_AUTHORIZED;
                 }
@@ -1435,14 +1435,11 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (folderSend != null){
                     folder = this.flm.queryById(folderSend.getFileId());
                 }
-                 final Folder fFolder = folder;
-
-
-
+                final Folder fFolder = folder;
                 if (folder == null) {
                     return ERROR_PARAMETER;
                 }
-                if (folder.getFolderParent().equals(locationpath)) {
+                if (folder.getFolderParent().equals(locationpath) && folder.getFolderCreator().equals(account)) {
                     continue;
                 }
                 if (!accessAuthUtil.accessFolder(folder, account)) {
@@ -1456,18 +1453,16 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                         .anyMatch((e) -> e.getFolderId().equals(fFolder.getFolderId()))) {
                     return ERROR_PARAMETER;
                 }
-
                 Folder parentFolder = this.flm.queryById(locationpath);
                 int pc = parentFolder.getFolderId().equals("root") ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
                 int folderConstraint = folder.getFolderConstraint();
                 if (flm.queryByParentId(locationpath).parallelStream()
                         .filter(e -> e.getFolderCreator().equals(account))
                         .anyMatch((e) -> e.getFolderName().equals(fFolder.getFolderName()))) {
-                    if (optMap.get(fid) == null) {
+                    if (optMap.get(folder.getFolderId()) == null) {
                         return ERROR_PARAMETER;
                     }
-
-                    switch (optMap.get(fid)) {
+                    switch (optMap.get(folder.getFolderId())) {
                         case "cover":
                             if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                                     fu.getAllFoldersId(locationpath))) {
@@ -1516,6 +1511,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                             String newFolderId2;
                             if (folderSend != null){
+                                folderSend.setFileName(folder.getFolderName());
                                 newFolderId2 = copySendFolderHelp(folderSend, locationpath);
                             }else {
                                 newFolderId2 = copyFolderHelp(folder, locationpath);
@@ -1930,6 +1926,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         folder.setFolderParent(newFolderParent);
         folder.setFolderCreator(receiver);
         String newFolderId = UUID.randomUUID().toString();
+        folder.setFolderName(fs.getFileName());
         folder.setFolderId(newFolderId);
         flm.insertNewFolder(folder);
         Pair<String,NodeTreeUtil.TagTreeNode> rootPair = new Pair<>(newFolderId,rootNode);
@@ -2383,7 +2380,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (node == null) {
                         return ERROR_PARAMETER;
                     }
-                    if (node.getFileParentFolder().equals(locationpath)) {
+                    if (node.getFileParentFolder().equals(locationpath) && node.getFileCreator().equals(account)) {
                         continue;
                     }
                     if (!ConfigureReader.instance().accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
@@ -2414,13 +2411,13 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (folder == null) {
                         return ERROR_PARAMETER;
                     }
-                    if (folder.getFolderParent().equals(locationpath)) {
+                    if (folder.getFolderParent().equals(locationpath) && folder.getFolderCreator().equals(account)) {
                         continue;
                     }
-                    if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                    if (!accessAuthUtil.accessFolder(folder, account)) {
                         return NO_AUTHORIZED;
                     }
-                    if (!ConfigureReader.instance().authorized(account, AccountAuth.COPY_FILES,
+                    if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
                             fu.getAllFoldersId(folder.getFolderParent()))) {
                         return NO_AUTHORIZED;
                     }
