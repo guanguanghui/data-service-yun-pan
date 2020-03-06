@@ -155,4 +155,124 @@ public class Main {
         System.out.println(set.size());
     }
 
+    public static void main9(String[] args){
+        Scanner sc = new Scanner(System.in);
+        while(sc.hasNext()){
+            String num = sc.nextLine();
+            char[] chars = num.toCharArray();
+            for(int i=chars.length-1;i>=0;i--){
+                System.out.print(chars[i]);
+            }
+        }
+    }
+
+    public static void main10(String[] args){
+        Scanner sc = new Scanner(System.in);
+        while(sc.hasNext()){
+            String line = sc.nextLine();
+            String[] words = line.split("\\s+");
+            for(int i=words.length-1;i>=0;i--){
+                if (i == 0) {
+                    System.out.print(words[i]);
+                }else{
+                    System.out.print(words[i] + " ");
+                }
+            }
+        }
+    }
+
+    public static void main11(String[] args){
+        Scanner sc = new Scanner(System.in);
+        while (sc.hasNext()){
+            int num = Integer.parseInt(sc.nextLine()) ;
+            Vector<String> set = new Vector<>();
+            for(int i=0;i<num;i++){
+                String line = sc.nextLine();
+                set.add(line);
+            }
+            Collections.sort(set);
+            for(String e: set){
+                System.out.println(e);
+            }
+        }
+    }
+
+    public static void main12(String[] args){
+        Scanner sc = new Scanner(System.in);
+        while (sc.hasNext()){
+            Integer num = sc.nextInt();
+            int sum =0;
+            while(num != 0){
+                if(num%2 !=0){
+                    sum+=1;
+                }
+                num = num/2;
+            }
+            System.out.println(sum);
+        }
+    }
+
+    public static void main13(String[] args){
+        Scanner sc = new Scanner(System.in);
+        while(sc.hasNext()){
+            String line1 = sc.nextLine();
+            String[] line1Arr = line1.split("\\s+");
+            // 总钱数
+            int N = Integer.parseInt(line1Arr[0]);
+            int m = Integer.parseInt(line1Arr[1]);
+
+            for(int i=0;i<m;i++){
+                String line = sc.nextLine();
+                String[] lineArr = line.split("\\s+");
+                // 编号 i
+                // 价格
+                int v = Integer.parseInt(line1Arr[0]);
+                // 重要度
+                int p = Integer.parseInt(line1Arr[1]);
+                // 0主件 非零表示附件
+                int q = Integer.parseInt(line1Arr[2]);
+            }
+        }
+    }
+
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+        while(sc.hasNext()){
+            String line = sc.nextLine();
+            String[] strArr = line.split(";");
+            Map<Character,Integer> map = new HashMap<>();
+            for(String e:strArr){
+                if(e!=null && e.length() >= 2){
+                    System.out.println(e);
+                    char c = e.charAt(0);
+                    Integer num = Integer.valueOf(e.substring(1));
+                    switch(c){
+                        case 'A':
+                        case 'D':
+                        case 'W':
+                        case 'S':
+                            Integer value = map.get(c)!=null?num + map.get(c):num;
+                            map.put(c,value);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            int x=0,y=0;
+            for(Character c:map.keySet()){
+                if(c == 'A'){
+                    x-=map.get(c);
+                }else if(c == 'D'){
+                    x+=map.get(c);
+                }else if(c == 'W'){
+                    y+=map.get(c);
+                }else if(c == 'S'){
+                    y-=map.get(c);
+                }
+            }
+            System.out.println(x +","+y);
+        }
+    }
+
 }
