@@ -1751,6 +1751,24 @@ function createFileRow(fi,aL,aD,aR,aO){
 			+ '"'
 			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
 			break;
+		case "zip":
+        case "rar":
+        case "jar":
+        case "tar":
+        case "gzip":
+        case "xlsx":
+        case "xls":
+		    fileRow = fileRow
+        			+ "<button onclick='fileServiceView("
+        			+ '"'
+        			+ fi.fileId
+        			+ '"'
+        			+ ','
+        			+ '"'
+        			+ fi.fileName
+        			+ '"'
+        			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
+		    break;
 		default:
 			break;
 		}
@@ -3071,6 +3089,26 @@ function txtView(fileId){
 // 预览PPT文档
 function pptView(fileId){
 	window.open("/pdfview/web/viewer.html?file=/resourceController/getPPTView/" + fileId);
+}
+
+// 预览excel,压缩文件
+function fileServiceView(fileId,fileName){
+    $.ajax({
+    	url:'externalLinksController/getDownloadKey.ajax',
+    	type:'POST',
+    	dataType:'text',
+    	data:{
+    		fId:fileId
+    	},
+    	success:function(result){
+    		// 获取链接
+    		var dlurl=window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/"+encodeURIComponent(fileName.replace(/\'/g,''))+"?dkey="+result;
+    		window.open('http://127.0.0.1:8012/onlinePreview?url='+encodeURIComponent(dlurl));
+    	},
+    	error:function(){
+
+    	}
+    });
 }
 
 // 查看图片
