@@ -1986,7 +1986,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         final String strFidList = request.getParameter("strFidList");
         final String fileReceiver = request.getParameter("fileReceiver");
         final String account = (String) request.getSession().getAttribute("ACCOUNT");
-        final String accountName = (String) request.getSession().getAttribute("ACCOUNTNAME");
+        String accountName = (String) request.getSession().getAttribute("ACCOUNTNAME");
+        if(accountName == null){
+            accountName = account;
+        }
         Map<String, Object> key = new HashMap<>();
         key.put("pid", "receive");
         key.put("fileReceiver", fileReceiver);
