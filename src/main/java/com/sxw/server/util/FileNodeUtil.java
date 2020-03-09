@@ -112,13 +112,13 @@ public class FileNodeUtil {
 
 				// 生成用于文件發送的存儲表
 				final Statement state8 = conn.createStatement();
-				state8.execute("CREATE TABLE IF NOT EXISTS FILE_SEND ( id varchar(128) NOT NULL,pid varchar(128) NOT NULL,file_id varchar(128) NOT NULL,file_name varchar(128) NOT NULL,file_parent varchar(128) NOT NULL,file_sender varchar(128) NOT NULL,file_receiver varchar(128) NOT NULL,file_send_date varchar(128) NOT NULL,file_send_state varchar(128) NOT NULL,file_type varchar(128) NOT NULL,PRIMARY KEY (id))");
+				state8.execute("CREATE TABLE IF NOT EXISTS FILE_SEND ( id varchar(128) NOT NULL,pid varchar(128) NOT NULL,file_id varchar(128) NOT NULL,file_name varchar(128) NOT NULL,file_parent varchar(128) NOT NULL,file_sender varchar(128) NOT NULL,file_sender_name varchar(128) NOT NULL,file_receiver varchar(128) NOT NULL,file_send_date varchar(128) NOT NULL,file_send_state varchar(128) NOT NULL,file_type varchar(128) NOT NULL,PRIMARY KEY (id))");
 				state8.executeQuery("SELECT count(*) FROM FILE_SEND WHERE id = 'receive'");
 				ResultSet rs8 = state8.getResultSet();
 				if (rs8.next()) {
 					if (rs8.getInt(1) == 0) {
 						final Statement state9 = conn.createStatement();
-						state9.execute("INSERT INTO FILE_SEND VALUES('receive','NULL','receive', '收到文件', 'NULL', '--', '--', '--', '1','file')");
+						state9.execute("INSERT INTO FILE_SEND VALUES('receive','NULL','receive', '收到文件', 'NULL', 'NULL', '--', '--', '--', '1', 'file')");
 					}
 				}
 				state8.close();

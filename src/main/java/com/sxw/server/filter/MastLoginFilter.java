@@ -100,7 +100,7 @@ public class MastLoginFilter implements Filter {
                 } catch (Exception e) {
                     // 其他异常，也返回登陆入口
                     Printer.instance.print(e.getMessage());
-                    chain.doFilter(request, response);
+                    hsr.sendRedirect(ConfigureReader.instance().getLoginUrl());
                 }
                 return;
             default:

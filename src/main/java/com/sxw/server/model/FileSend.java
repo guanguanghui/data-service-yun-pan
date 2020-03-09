@@ -8,6 +8,7 @@ public class FileSend
     private String fileName;
     private String fileParent;
     private String fileSender;
+    private String fileSenderName;
     private String fileReceiver;
     private String fileSendDate;
     private String fileSendState;
@@ -59,6 +60,14 @@ public class FileSend
 
     public void setFileSender(String fileSender) {
         this.fileSender = fileSender;
+    }
+
+    public String getFileSenderName() {
+        return fileSenderName;
+    }
+
+    public void setFileSenderName(String fileSenderName) {
+        this.fileSenderName = fileSenderName;
     }
 
     public String getFileReceiver() {

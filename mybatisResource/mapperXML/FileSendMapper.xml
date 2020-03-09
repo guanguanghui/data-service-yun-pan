@@ -8,6 +8,7 @@
 		<result column="file_name" jdbcType="VARCHAR" property="fileName" />
 		<result column="file_parent" jdbcType="VARCHAR" property="fileParent" />
 		<result column="file_sender" jdbcType="VARCHAR" property="fileSender" />
+		<result column="file_sender_name" jdbcType="VARCHAR" property="fileSenderName" />
 		<result column="file_receiver" jdbcType="VARCHAR" property="fileReceiver" />
 		<result column="file_send_date" jdbcType="VARCHAR" property="fileSendDate" />
 		<result column="file_send_state" jdbcType="VARCHAR" property="fileSendState" />
@@ -72,7 +73,8 @@
 		#{fileId,jdbcType=VARCHAR},file_name =
 		#{fileName,jdbcType=VARCHAR},file_parent =
 		#{fileParent,jdbcType=VARCHAR},file_sender =
-		#{fileSender,jdbcType=VARCHAR},file_receiver =
+		#{fileSender,jdbcType=VARCHAR},file_sender_name =
+		#{fileSenderName,jdbcType=VARCHAR},file_receiver =
 		#{fileReceiver,jdbcType=VARCHAR},file_send_date =
 		#{fileSendDate,jdbcType=VARCHAR},file_send_state =
 		#{fileSendState,jdbcType=VARCHAR},file_type =
@@ -82,7 +84,7 @@
 
 	<insert id="insert" parameterType="com.sxw.server.model.FileSend">
 		INSERT INTO FILE_SEND
-		VALUES(#{id,jdbcType=VARCHAR},#{pid,jdbcType=VARCHAR},#{fileId,jdbcType=VARCHAR},#{fileName,jdbcType=VARCHAR},#{fileParent,jdbcType=VARCHAR},#{fileSender,jdbcType=VARCHAR},#{fileReceiver,jdbcType=VARCHAR},#{fileSendDate,jdbcType=VARCHAR},#{fileSendState,jdbcType=VARCHAR},#{fileType,jdbcType=VARCHAR})
+		VALUES(#{id,jdbcType=VARCHAR},#{pid,jdbcType=VARCHAR},#{fileId,jdbcType=VARCHAR},#{fileName,jdbcType=VARCHAR},#{fileParent,jdbcType=VARCHAR},#{fileSender,jdbcType=VARCHAR},#{fileSenderName,jdbcType=VARCHAR},#{fileReceiver,jdbcType=VARCHAR},#{fileSendDate,jdbcType=VARCHAR},#{fileSendState,jdbcType=VARCHAR},#{fileType,jdbcType=VARCHAR})
 	</insert>
 
 </mapper>

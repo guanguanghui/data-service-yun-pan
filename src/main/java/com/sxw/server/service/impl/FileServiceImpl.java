@@ -1986,6 +1986,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         final String strFidList = request.getParameter("strFidList");
         final String fileReceiver = request.getParameter("fileReceiver");
         final String account = (String) request.getSession().getAttribute("ACCOUNT");
+        final String accountName = (String) request.getSession().getAttribute("ACCOUNTNAME");
         Map<String, Object> key = new HashMap<>();
         key.put("pid", "receive");
         key.put("fileReceiver", fileReceiver);
@@ -2026,6 +2027,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 fs.setFileParent("receive");
                 fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                 fs.setFileSender(account);
+                fs.setFileSenderName(accountName);
                 fs.setFileReceiver(fileReceiver);
                 fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
                 fs.setFileType(FileSendType.FILE.getName());
@@ -2072,6 +2074,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 fs.setFileParent("receive");
                 fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                 fs.setFileSender(account);
+                fs.setFileSenderName(accountName);
                 fs.setFileReceiver(fileReceiver);
                 fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
                 fs.setFileType(FileSendType.FOLDER.getName());
@@ -2116,6 +2119,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
         FileSend fs = new FileSend();
         fs.setFileSender(folder.getFileSender());
+        fs.setFileSenderName(folder.getFileSenderName());
         fs.setFileReceiver(receiver);
         fs.setFileSendDate(folder.getFileSendDate());
         fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());

@@ -201,7 +201,7 @@ public class FolderViewServiceImpl implements FolderViewService {
                     }else {
                         folder.setFolderName(e.getFileName());
                     }
-                    folder.setFolderCreator(e.getFileSender());
+                    folder.setFolderCreator(e.getFileSenderName());
                     folder.setFolderCreationDate(e.getFileSendDate());
 
                     FolderSendView fsv0 = new FolderSendView(folder);
@@ -221,7 +221,7 @@ public class FolderViewServiceImpl implements FolderViewService {
                     }
                     node.setFileName(e.getFileName());
                     node.setFileCreationDate(e.getFileSendDate());
-                    node.setFileCreator(e.getFileSender());
+                    node.setFileCreator(e.getFileSenderName());
                     FileSendView fsv1 = new FileSendView(node);
                     fsv1.setId(e.getId());
                     fsv1.setPid(e.getPid());
