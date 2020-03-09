@@ -245,10 +245,10 @@ public class FileNodeUtil {
 		return newName;
 	}
 
-	public static String getNewReceiveFileName(String originalName, Stream<FileSend> nodes) {
+	public static String getNewReceiveFileName(String originalName, List<FileSend> nodes) {
 		int i = 0;
 		List<String> fileNames = Arrays
-				.asList(nodes.parallel().map((t) -> t.getFileName()).toArray(String[]::new));
+				.asList(nodes.stream().parallel().map((t) -> t.getFileName()).toArray(String[]::new));
 		String newName = originalName;
 		while (fileNames.contains(newName)) {
 			i++;

@@ -4,6 +4,9 @@ import javax.annotation.Resource;
 import javax.servlet.annotation.*;
 import javax.servlet.*;
 
+import com.alibaba.fastjson.JSON;
+import com.google.gson.Gson;
+import com.sxw.printer.Printer;
 import com.sxw.server.exception.BusinessException;
 import com.sxw.server.pojo.TokenInfo;
 import com.sxw.server.util.ConfigureReader;
@@ -11,6 +14,7 @@ import com.sxw.server.util.ConfigureReader;
 import javax.servlet.http.*;
 
 import com.sxw.server.util.LogUtil;
+import com.sxw.server.util.SxwApiUtil;
 import com.sxw.server.util.TokenResolver;
 import org.springframework.core.annotation.Order;
 
@@ -24,6 +28,8 @@ public class MastLoginFilter implements Filter {
 
     @Resource
     private LogUtil lu;
+    @Resource
+    private SxwApiUtil sau;
 
     public void init(final FilterConfig filterConfig) throws ServletException {
     }
@@ -62,6 +68,8 @@ public class MastLoginFilter implements Filter {
                     String account = ti.getUserId();
                     String password = "admin";
 
+                    String acountBaseInfo = sau.getAcountBaseInfo(ConfigureReader.instance().getAcountBaseInfoUrl(), token);
+                    String userName = JSON.parseObject(acountBaseInfo).getJSONObject("data").getJSONObject("userDto").getString("userName");
 
                     // 新账户和密码的合法性检查
                     CharsetEncoder ios8859_1Encoder = Charset.forName("ISO-8859-1").newEncoder();
@@ -69,12 +77,16 @@ public class MastLoginFilter implements Filter {
                         if (account.indexOf("=") < 0 && account.indexOf(":") < 0) {
                             if (ConfigureReader.instance().foundAccount(account)) {
                                 session.setAttribute("ACCOUNT", (Object) ti.getUserId());
+                                session.setAttribute("ACCOUNTNAME", userName);
+                                session.setAttribute("TOKEN", token);
                                 hsr.sendRedirect("/home.html");
                             } else if (password != null && password.length() >= 3 && password.length() <= 32
                                     && ios8859_1Encoder.canEncode(password)) {
                                 if (ConfigureReader.instance().createNewAccount(account, password)) {
                                     lu.writeSignUpEvent(hsq, account, password);
                                     session.setAttribute("ACCOUNT", (Object) ti.getUserId());
+                                    session.setAttribute("ACCOUNTNAME", userName);
+                                    session.setAttribute("TOKEN", token);
                                     hsr.sendRedirect("/home.html");
                                 }
                             }
@@ -87,7 +99,8 @@ public class MastLoginFilter implements Filter {
                     hsr.sendRedirect(ConfigureReader.instance().getLoginUrl());
                 } catch (Exception e) {
                     // 其他异常，也返回登陆入口
-                    hsr.sendRedirect(ConfigureReader.instance().getLoginUrl());
+                    Printer.instance.print(e.getMessage());
+                    chain.doFilter(request, response);
                 }
                 return;
             default:

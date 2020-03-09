@@ -55,6 +55,7 @@ public class FolderViewServiceImpl implements FolderViewService {
             return "NOT_FOUND";// 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
         }
         final String account = (String) session.getAttribute("ACCOUNT");
+        final String accountName = (String) session.getAttribute("ACCOUNTNAME");
         // 检查访问文件夹视图请求是否合法
         if (!accessAuthUtil.accessFolder(vf, account)) {
             return "notAccess";// 如无访问权限则直接返回该字段，令页面回到ROOT视图。
@@ -73,6 +74,13 @@ public class FolderViewServiceImpl implements FolderViewService {
         List<Folder> folders = this.fm.queryByParentIdSection(keyMap1);
         List<Folder> fs = folders.parallelStream().filter(f -> {
             return accessAuthUtil.accessViewFolder(f, account);
+        }).map(e -> {
+            if (accountName != null){
+                e.setFolderCreator(accountName);
+            }else if(account != null){
+                e.setFolderCreator(account);
+            }
+            return e;
         }).collect(Collectors.toList());
 
         fv.setFolderList(fs);
@@ -85,9 +93,18 @@ public class FolderViewServiceImpl implements FolderViewService {
         keyMap2.put("rows", SELECT_STEP);
         List<Node> files = this.flm.queryByParentFolderIdSection(keyMap2).stream().filter(
                 e -> accessAuthUtil.accessViewFile(e,account)
-        ).collect(Collectors.toList());
+        ).map(e -> {
+            if(accountName != null){
+                e.setFileCreator(accountName);
+            }else if (account != null){
+                e.setFileCreator(account);
+            }
+            return e;
+        }).collect(Collectors.toList());
         fv.setFileList(files);
-        if (account != null) {
+        if (accountName != null) {
+            fv.setAccount(accountName);
+        }else if(account != null){
             fv.setAccount(account);
         }
         if (ConfigureReader.instance().isAllowChangePassword()) {
@@ -144,6 +161,7 @@ public class FolderViewServiceImpl implements FolderViewService {
             return "ERROR";
         }
         final String account = (String) session.getAttribute("ACCOUNT");
+        final String accountName = (String) session.getAttribute("ACCOUNTNAME");
         // 初始化的收到文件根视图: receive
         FileSend fs = this.fsm.queryById(fid);
         Folder vf = this.fm.queryById(fs.getFileId());
@@ -153,8 +171,6 @@ public class FolderViewServiceImpl implements FolderViewService {
         FolderSendView fsv = new FolderSendView(vf);
         fsv.setId(fs.getId());
         fsv.setPid(fs.getPid());
-
-
 
         final FolderReceiveView fv = new FolderReceiveView();
         fv.setSelectStep(SELECT_STEP);// 返回查询步长
@@ -202,7 +218,6 @@ public class FolderViewServiceImpl implements FolderViewService {
                         node.setFileId(e.getFileId());
                         node.setFileParentFolder(e.getFileParent());
                         node.setFileSize("（文件已被删除，失效！）");
-
                     }
                     node.setFileName(e.getFileName());
                     node.setFileCreationDate(e.getFileSendDate());
@@ -215,7 +230,9 @@ public class FolderViewServiceImpl implements FolderViewService {
 
         fv.setFolderList(folders);
         fv.setFileList(nodes);
-        if (account != null) {
+        if (accountName != null) {
+            fv.setAccount(accountName);
+        }else if(account != null){
             fv.setAccount(account);
         }
         if (ConfigureReader.instance().isAllowChangePassword()) {
@@ -263,6 +280,7 @@ public class FolderViewServiceImpl implements FolderViewService {
             return "NOT_FOUND";// 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
         }
         final String account = (String) session.getAttribute("ACCOUNT");
+        final String accountName = (String) session.getAttribute("ACCOUNTNAME");
         // 检查访问文件夹视图请求是否合法
         if (!ConfigureReader.instance().accessFolder(vf, account)) {
             return "notAccess";// 如无访问权限则直接返回该字段，令页面回到ROOT视图。
@@ -289,6 +307,11 @@ public class FolderViewServiceImpl implements FolderViewService {
         for (Folder f : folders) {
             if (ConfigureReader.instance().accessFolder(f, account)) {
                 f.setFolderCreationDate(ExpirationDateUtil.getExpirationDate(f.getFolderCreationDate(), druation));
+                if(accountName != null){
+                    f.setFolderCreator(accountName);
+                }else if(account != null){
+                    f.setFolderCreator(account);
+                }
                 fs.add(f);
             }
         }
@@ -304,8 +327,17 @@ public class FolderViewServiceImpl implements FolderViewService {
             // 设定过期日期
             e.setFileCreationDate(ExpirationDateUtil.getExpirationDate(e.getFileCreationDate(), druation));
             return e;
-        }).filter(e -> e.getFileCreator().equals(account)).collect(Collectors.toList()));
-        if (account != null) {
+        }).filter(e -> e.getFileCreator().equals(account)).map(e -> {
+            if (accountName != null) {
+                e.setFileCreator(accountName);
+            }else if(account != null){
+                e.setFileCreator(account);
+            }
+            return e;
+        }).collect(Collectors.toList()));
+        if (accountName != null) {
+            fv.setAccount(accountName);
+        }else if(account != null){
             fv.setAccount(account);
         }
         if (ConfigureReader.instance().isAllowChangePassword()) {

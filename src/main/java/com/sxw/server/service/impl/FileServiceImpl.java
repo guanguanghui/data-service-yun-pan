@@ -2029,9 +2029,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 fs.setFileReceiver(fileReceiver);
                 fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
                 fs.setFileType(FileSendType.FILE.getName());
-                Stream<FileSend> fileSends = fsm.queryByReceiver(key).parallelStream()
-                        .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()));
-                if (fileSends.anyMatch(e -> e.getFileName().equals(node.getFileName()))) {
+                List<FileSend> fileSends = fsm.queryByReceiver(key).parallelStream()
+                        .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
+                        .collect(Collectors.toList());
+                if (fileSends.stream().anyMatch(e -> e.getFileName().equals(node.getFileName()))) {
                     // 文件名重复的处理
                     fs.setFileName(FileNodeUtil.getNewReceiveFileName(fs.getFileName(),fileSends));
                 }

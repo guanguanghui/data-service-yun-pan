@@ -457,6 +457,20 @@ public class ConfigureReader {
 		return "/home.html";
 	}
 
+	public String getAcountBaseInfoUrl(){
+		if (serverp != null && serverp.getProperty("acountBaseInfoUrl") != null) {
+			return serverp.getProperty("acountBaseInfoUrl");
+		}
+		return null;
+	}
+
+	public String getAllDepartmentUrl(){
+		if (serverp != null && serverp.getProperty("findAllDepartmentUrl") != null) {
+			return serverp.getProperty("findAllDepartmentUrl");
+		}
+		return null;
+	}
+
 	public VCLevel getInitVCLevel() {
 		if (serverp != null && serverp.getProperty("VC.level") != null) {
 			switch (serverp.getProperty("VC.level")) {

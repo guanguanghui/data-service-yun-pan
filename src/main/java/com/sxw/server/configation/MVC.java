@@ -1,6 +1,7 @@
 package com.sxw.server.configation;
 
 import com.sxw.server.util.ConfigureReader;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.resource.*;
 
 import com.google.gson.Gson;
@@ -66,5 +67,10 @@ public class MVC extends ResourceHttpRequestHandler implements WebMvcConfigurer 
 	@Bean
 	public Gson gson() {
 		return new Gson();
+	}
+
+	@Bean
+	public RestTemplate restTemplate() {
+		return new RestTemplate();
 	}
 }
