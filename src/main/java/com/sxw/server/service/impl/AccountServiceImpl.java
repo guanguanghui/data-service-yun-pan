@@ -1,5 +1,10 @@
 package com.sxw.server.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
+import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.VCLevel;
 import com.sxw.server.mapper.FileSenderMapper;
@@ -35,6 +40,8 @@ public class AccountServiceImpl implements AccountService {
 	private RSAKeyUtil ku;
 	@Resource
 	private LogUtil lu;
+	@Resource
+	private SxwApiUtil sau;
 
 	// 登录密钥有效期
 	private static final long TIME_OUT = 30000L;
@@ -309,6 +316,71 @@ public class AccountServiceImpl implements AccountService {
 				.filter(e -> !e.equals(account))
 				.collect(Collectors.toList());
 		return gson.toJson(goodFriends);
+	}
+
+	private void getAllDepartmentTree(JSONArray nodes,JSONArray targetTreeArr){
+        if (nodes == null){
+            return;
+        }
+        if(targetTreeArr == null){
+            targetTreeArr = new JSONArray();
+        }
+        for (int i=0;i<nodes.size();i++){
+            JSONObject node = (JSONObject) nodes.get(i);
+            JSONObject newNode = new JSONObject();
+            newNode.put("text",node.getString("name"));
+            newNode.put("href",node.getString("id"));
+            JSONArray tags = new JSONArray();
+            tags.add(0,""+node.getLong("deptTeacherNum"));
+            newNode.put("tags",tags);
+
+            JSONArray newTreeArrJson = new JSONArray();
+            JSONArray treeArrJson = node.getJSONArray("sunDepartment");
+            if (treeArrJson.size() == 0){
+                treeArrJson = node.getJSONArray("userOutputDtos");
+                for(int j=0;j<treeArrJson.size();j++ ){
+                    JSONObject userNode = (JSONObject) treeArrJson.get(i);
+                    JSONObject newUserNode = new JSONObject();
+                    newUserNode.put("text",userNode.getString("userName"));
+                    newUserNode.put("href",userNode.getString("userId"));
+                    JSONArray userTags = new JSONArray();
+                    userTags.add(0,"0");
+                    newUserNode.put("tags",userTags);
+                    newTreeArrJson.add(j,newUserNode);
+                }
+                newNode.put("nodes",newTreeArrJson);
+                targetTreeArr.set(i,newNode);
+                return;
+            }
+
+            newNode.put("nodes",newTreeArrJson);
+            targetTreeArr.set(i,newNode);
+            getAllDepartmentTree(treeArrJson,newTreeArrJson);
+        }
+    }
+
+	@Override
+	public String getAllDepartmentInfo(final HttpServletRequest request){
+		final String account = (String) request.getSession().getAttribute("ACCOUNT");
+		if (account == null) {
+			return "mustlogin";
+		}
+		final ConfigureReader cr = ConfigureReader.instance();
+		final String token = (String) request.getSession().getAttribute("TOKEN");
+		if(token != null){
+		    String body = sau.getAllDepartment(cr.getAllDepartmentUrl(),token);
+		    try {
+                JSONArray nodes = JSON.parseObject(body).getJSONArray("data");
+                JSONArray targetTreeArr = new JSONArray();
+                getAllDepartmentTree(nodes,targetTreeArr);
+                return targetTreeArr.toJSONString();
+            }catch (Exception e){
+                Printer.instance.print(e.getMessage());
+                return "noDepartmentInfo";
+            }
+		}else {
+			return "noDepartmentInfo";
+		}
 	}
 
 }

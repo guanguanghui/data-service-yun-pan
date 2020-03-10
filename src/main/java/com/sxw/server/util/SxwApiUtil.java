@@ -26,7 +26,7 @@ public class SxwApiUtil {
 
     public String getAllDepartment(String url,String token){
 
-        String accountInfo = getAcountBaseInfo(url,token);
+        String accountInfo = getAcountBaseInfo(ConfigureReader.instance().getAcountBaseInfoUrl(),token);
         String schoolId = JSON.parseObject(accountInfo).getJSONObject("data").getJSONObject("schoolInfo").getString("schoolId");
 
         Map<String, Object> requestParam = new HashMap<>();

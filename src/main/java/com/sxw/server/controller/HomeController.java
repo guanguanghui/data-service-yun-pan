@@ -386,6 +386,13 @@ public class HomeController {
 		return as.getGoodFriends(request);
 	}
 
+	// 获得组织机构人员列表信息
+	@RequestMapping(value = { "/getDepartmentInfo.ajax" }, produces = { CHARSET_BY_AJAX })
+	@ResponseBody
+	public String getDepartmentInfo(final HttpServletRequest request){
+		return as.getAllDepartmentInfo(request);
+	}
+
 	// 获取永久资源链接的对应ckey
 	@RequestMapping(value = { "/getFileChainKey.ajax" }, produces = { CHARSET_BY_AJAX })
 	@ResponseBody

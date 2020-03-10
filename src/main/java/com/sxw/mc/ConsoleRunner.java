@@ -43,7 +43,7 @@ public class ConsoleRunner {
 	private ExecutorService worker;
 
 	private ConsoleRunner() {
-		Printer.init(false);
+		Printer.init();
 		ConsoleRunner.ctl = new SxwPanCtl();
 		worker = Executors.newSingleThreadExecutor();
 		ConsoleRunner.commandTips = "sxwpan:您可以输入以下指令以控制服务器：\r\n-start 启动服务器\r\n-stop 停止服务器\r\n-exit 停止服务器并退出应用\r\n-restart 重启服务器\r\n-files 文件管理\r\n-status 查看服务器状态\r\n-help 显示帮助文本";

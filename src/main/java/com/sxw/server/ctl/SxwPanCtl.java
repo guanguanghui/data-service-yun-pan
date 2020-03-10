@@ -7,8 +7,6 @@ import org.springframework.boot.web.servlet.server.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.context.annotation.*;
 import org.springframework.context.*;
-
-
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.coyote.http11.Http11NioProtocol;

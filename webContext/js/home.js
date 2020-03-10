@@ -21,6 +21,7 @@ var checkedMovefiles;// 移动文件的存储列表
 var checkedRestorefiles;// 还原文件的存储列表
 var checkedCopyfiles;// 复制文件的存储列表
 var checkedSendfiles;// 发送文件的存储列表
+var checkedReceivers;// 发送文件时的接受者存储列表
 var constraintLevel;// 当前文件夹限制等级
 var account;// 用户账户
 var isUpLoading=false;// 是否正在执行上传操作
@@ -2051,7 +2052,8 @@ function sendFiles(){
         data:{
             strIdList : checkedSendfiles.filesId,
             strFidList : checkedSendfiles.foldersId,
-            fileReceiver : $("#showReceiverName").text()
+            //fileReceiver : $("#showReceiverName").text()
+            fileReceiver : JSON.stringify(Array.from(checkedReceivers))
         },
         success : function(result) {
             switch (result) {
@@ -2086,73 +2088,57 @@ function showSendFilesModel() {
     	$('#sendFilesModal').modal('show');
     	return;
     }
+    $("#receiverAlert").text("");
     $('#sendFilesMessage').html('');
     $('#sendFilesForm').show();
 	$('#sendFilesModal').modal('show');
-	var defaultData = [
-              {
-                text: 'Parent 1',
-                href: '#parent1',
-                tags: ['4'],
-                nodes: [
-                  {
-                    text: 'Child 1',
-                    href: '#child1',
-                    tags: ['2'],
-                    nodes: [
-                      {
-                        text: 'Grandchild 1',
-                        href: '#grandchild1',
-                        tags: ['0']
-                      },
-                      {
-                        text: 'Grandchild 2',
-                        href: '#grandchild2',
-                        tags: ['0']
-                      }
-                    ]
-                  },
-                  {
-                    text: 'Child 2',
-                    href: '#child2',
-                    tags: ['0']
-                  }
-                ]
+    checkedReceivers = new Set();
+	$.ajax({
+    	type : "POST",
+    	dataType : "text",
+    	data : {
+    	},
+    	url : "homeController/getDepartmentInfo.ajax",
+    	success : function(result) {
+    	    var $checkableTree = $('#receivePersonTree').treeview({
+              color: "#428bca",
+              expandIcon: "glyphicon glyphicon-chevron-right",
+              collapseIcon: "glyphicon glyphicon-chevron-down",
+              nodeIcon: "glyphicon glyphicon-user",
+              showCheckbox: true,
+              showTags: true,
+              data: eval("("+result+")"),
+              onNodeChecked: function(event, node) {
+                if(node.tags[0] == '0'){
+                    checkedReceivers.add(node.href);
+                }
               },
-              {
-                text: 'Parent 2',
-                href: '#parent2',
-                tags: ['0']
-              },
-              {
-                text: 'Parent 3',
-                href: '#parent3',
-                 tags: ['0']
-              },
-              {
-                text: 'Parent 4',
-                href: '#parent4',
-                tags: ['0']
-              },
-              {
-                text: 'Parent 5',
-                href: '#parent5'  ,
-                tags: ['0']
+              onNodeUnchecked: function (event, node) {
+                checkedReceivers.delete(node.href);
               }
-            ];
-    $('#receivePersonTree').treeview({
-      color: "#428bca",
-      expandIcon: "glyphicon glyphicon-stop",
-      collapseIcon: "glyphicon glyphicon-unchecked",
-      nodeIcon: "glyphicon glyphicon-user",
-      showTags: true,
-      data: defaultData
+            });
+            var findCheckableNodess = function() {
+              return $checkableTree.treeview('search', [ $('#input-check-node').val(), { ignoreCase: true, exactMatch: true } ]);
+            };
+            $('#input-check-node').on('keyup', function (e) {
+              checkableNodes = findCheckableNodess();
+              $('.check-node').prop('disabled', !(checkableNodes.length >= 1));
+            });
+    	},
+    	error : function() {
+        	$('#sendFilesMessage').html('提示：出现意外错误，未获得组织结构信息！');
+        }
     });
+
 }
 
 // 修改发送文件接收者
 function changeReceiverName(receiver){
 	$("#showReceiverName").text(receiver);
+	if(checkedReceivers == null){
+	    checkedReceivers = new Set();
+	}
+	checkedReceivers.add(receiver);
 }
 
 
@@ -3160,8 +3146,8 @@ function fileServiceView(fileId,fileName){
     	},
     	success:function(result){
     		// 获取链接
-    		var dlurl=window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/"+encodeURIComponent(fileName.replace(/\'/g,''))+"?dkey="+result;
-    		window.open('http://127.0.0.1:8012/onlinePreview?url='+encodeURIComponent(dlurl));
+    		var dlurl=window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/"+(fileName.replace(/\'/g,''))+"?dkey="+result;
+    		window.open('http://127.0.0.1:8012/onlinePreview?url='+(dlurl));
     	},
     	error:function(){
 

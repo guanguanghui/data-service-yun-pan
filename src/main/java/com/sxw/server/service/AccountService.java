@@ -1,11 +1,6 @@
 package com.sxw.server.service;
 
-import com.sxw.server.enumeration.AccountAuth;
-import com.sxw.server.model.Folder;
-import com.sxw.server.model.Node;
-
 import javax.servlet.http.*;
-import java.util.List;
 
 public interface AccountService
 {
@@ -79,4 +74,5 @@ public interface AccountService
 
     String getGoodFriends(final HttpServletRequest request);
 
+    String getAllDepartmentInfo(final HttpServletRequest request);
 }

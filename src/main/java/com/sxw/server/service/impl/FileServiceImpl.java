@@ -1984,121 +1984,133 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
     public String doSendFiles(HttpServletRequest request) {
         final String strIdList = request.getParameter("strIdList");
         final String strFidList = request.getParameter("strFidList");
-        final String fileReceiver = request.getParameter("fileReceiver");
+        final String fileReceivers = request.getParameter("fileReceiver");
         final String account = (String) request.getSession().getAttribute("ACCOUNT");
         String accountName = (String) request.getSession().getAttribute("ACCOUNTNAME");
         if(accountName == null){
             accountName = account;
         }
-        Map<String, Object> key = new HashMap<>();
-        key.put("pid", "receive");
-        key.put("fileReceiver", fileReceiver);
-        key.put("offset", 0L);
-        key.put("rows", Integer.MAX_VALUE);
+        final List<String> fileReceiversList = gson.fromJson(fileReceivers, new TypeToken<List<String>>() {
+        }.getType());
 
-        try {
-            final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
-            }.getType());
-            for (final String id : idList) {
-                if (id == null || id.length() <= 0) {
-                    return ERROR_PARAMETER;
-                }
-                // 包含在自身文件空间里面和收到文件空间两种情况
-                Node node;
-                FileSend fileSend = this.fsm.queryById(id);
-                if(fileSend != null){
-                    node = this.fm.queryById(fileSend.getFileId());
-                }else{
-                    node = this.fm.queryById(id);
-                }
-                if (node == null) {
-                    return ERROR_PARAMETER;
-                }
-                if (!accessAuthUtil.accessSendFile(node, account)) {
-                    return NO_AUTHORIZED;
-                }
-                if (!accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
-                        fu.getAllFoldersId(node.getFileParentFolder()))) {
-                    return NO_AUTHORIZED;
-                }
-
-                FileSend fs = new FileSend();
-                fs.setId(UUID.randomUUID().toString());
-                fs.setPid("receive");
-                fs.setFileId(id);
-                fs.setFileName(node.getFileName());
-                fs.setFileParent("receive");
-                fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
-                fs.setFileSender(account);
-                fs.setFileSenderName(accountName);
-                fs.setFileReceiver(fileReceiver);
-                fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
-                fs.setFileType(FileSendType.FILE.getName());
-                List<FileSend> fileSends = fsm.queryByReceiver(key).parallelStream()
-                        .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
-                        .collect(Collectors.toList());
-                if (fileSends.stream().anyMatch(e -> e.getFileName().equals(node.getFileName()))) {
-                    // 文件名重复的处理
-                    fs.setFileName(FileNodeUtil.getNewReceiveFileName(fs.getFileName(),fileSends));
-                }
-                fsm.insert(fs);
-                this.lu.writeSendFileEvent(request, fs);
-            }
-            final List<String> fidList = gson.fromJson(strFidList, new TypeToken<List<String>>() {
-            }.getType());
-            for (final String fid : fidList) {
-                if (fid == null || fid.length() <= 0) {
-                    return ERROR_PARAMETER;
-                }
-                Folder folder;
-                FileSend folderSend = this.fsm.queryById(fid);
-                if (folderSend != null){
-                    folder = this.flm.queryById(folderSend.getFileId());
-                }else{
-                    folder = this.flm.queryById(fid);
-                }
-
-                if (folder == null) {
-                    return ERROR_PARAMETER;
-                }
-                if (!accessAuthUtil.accessFolder(folder, account)) {
-                    return NO_AUTHORIZED;
-                }
-                if (!accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
-                        fu.getAllFoldersId(folder.getFolderParent()))) {
-                    return NO_AUTHORIZED;
-                }
-
-                FileSend fs = new FileSend();
-                fs.setId(UUID.randomUUID().toString());
-                fs.setPid("receive");
-                fs.setFileId(folder.getFolderId());
-                fs.setFileName(folder.getFolderName());
-                fs.setFileParent("receive");
-                fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
-                fs.setFileSender(account);
-                fs.setFileSenderName(accountName);
-                fs.setFileReceiver(fileReceiver);
-                fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
-                fs.setFileType(FileSendType.FOLDER.getName());
-
-                List<FileSend> folderSends = fsm.queryByReceiver(key).parallelStream()
-                        .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName())).collect(Collectors.toList());
-
-                if (folderSends.stream().anyMatch((e) -> e.getFileName().equals(folder.getFolderName()))) {
-                    // 文件夹名重复的处理
-                    fs.setFileName(FileNodeUtil.getNewReceiveFolderName(fs.getFileName(),folderSends));
-                }
-                doSendFolderHelp(fs,folder.getFolderCreator());
-                this.lu.writeSendFolderEvent(request, fs);
-            }
-            if (fidList.size() > 0) {
-                ServerInitListener.needCheck = true;
-            }
-            return "sendFilesSuccess";
-        } catch (Exception e) {
+        if(fileReceiversList == null || fileReceiversList.isEmpty()){
             return ERROR_PARAMETER;
         }
+
+        for(String fileReceiver: fileReceiversList){
+            Map<String, Object> key = new HashMap<>();
+            key.put("pid", "receive");
+            key.put("fileReceiver", fileReceiver);
+            key.put("offset", 0L);
+            key.put("rows", Integer.MAX_VALUE);
+
+            try {
+                final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
+                }.getType());
+                for (final String id : idList) {
+                    if (id == null || id.length() <= 0) {
+                        return ERROR_PARAMETER;
+                    }
+                    // 包含在自身文件空间里面和收到文件空间两种情况
+                    Node node;
+                    FileSend fileSend = this.fsm.queryById(id);
+                    if(fileSend != null){
+                        node = this.fm.queryById(fileSend.getFileId());
+                    }else{
+                        node = this.fm.queryById(id);
+                    }
+                    if (node == null) {
+                        return ERROR_PARAMETER;
+                    }
+                    if (!accessAuthUtil.accessSendFile(node, account)) {
+                        return NO_AUTHORIZED;
+                    }
+                    if (!accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
+                            fu.getAllFoldersId(node.getFileParentFolder()))) {
+                        return NO_AUTHORIZED;
+                    }
+
+                    FileSend fs = new FileSend();
+                    fs.setId(UUID.randomUUID().toString());
+                    fs.setPid("receive");
+                    fs.setFileId(id);
+                    fs.setFileName(node.getFileName());
+                    fs.setFileParent("receive");
+                    fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
+                    fs.setFileSender(account);
+                    fs.setFileSenderName(accountName);
+                    fs.setFileReceiver(fileReceiver);
+                    fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
+                    fs.setFileType(FileSendType.FILE.getName());
+                    List<FileSend> fileSends = fsm.queryByReceiver(key).parallelStream()
+                            .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
+                            .collect(Collectors.toList());
+                    if (fileSends.stream().anyMatch(e -> e.getFileName().equals(node.getFileName()))) {
+                        // 文件名重复的处理
+                        fs.setFileName(FileNodeUtil.getNewReceiveFileName(fs.getFileName(),fileSends));
+                    }
+                    fsm.insert(fs);
+                    this.lu.writeSendFileEvent(request, fs);
+                }
+                final List<String> fidList = gson.fromJson(strFidList, new TypeToken<List<String>>() {
+                }.getType());
+                for (final String fid : fidList) {
+                    if (fid == null || fid.length() <= 0) {
+                        return ERROR_PARAMETER;
+                    }
+                    Folder folder;
+                    FileSend folderSend = this.fsm.queryById(fid);
+                    if (folderSend != null){
+                        folder = this.flm.queryById(folderSend.getFileId());
+                    }else{
+                        folder = this.flm.queryById(fid);
+                    }
+
+                    if (folder == null) {
+                        return ERROR_PARAMETER;
+                    }
+                    if (!accessAuthUtil.accessFolder(folder, account)) {
+                        return NO_AUTHORIZED;
+                    }
+                    if (!accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
+                            fu.getAllFoldersId(folder.getFolderParent()))) {
+                        return NO_AUTHORIZED;
+                    }
+
+                    FileSend fs = new FileSend();
+                    fs.setId(UUID.randomUUID().toString());
+                    fs.setPid("receive");
+                    fs.setFileId(folder.getFolderId());
+                    fs.setFileName(folder.getFolderName());
+                    fs.setFileParent("receive");
+                    fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
+                    fs.setFileSender(account);
+                    fs.setFileSenderName(accountName);
+                    fs.setFileReceiver(fileReceiver);
+                    fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
+                    fs.setFileType(FileSendType.FOLDER.getName());
+
+                    List<FileSend> folderSends = fsm.queryByReceiver(key).parallelStream()
+                            .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName())).collect(Collectors.toList());
+
+                    if (folderSends.stream().anyMatch((e) -> e.getFileName().equals(folder.getFolderName()))) {
+                        // 文件夹名重复的处理
+                        fs.setFileName(FileNodeUtil.getNewReceiveFolderName(fs.getFileName(),folderSends));
+                    }
+                    doSendFolderHelp(fs,folder.getFolderCreator());
+                    this.lu.writeSendFolderEvent(request, fs);
+                }
+                if (fidList.size() > 0) {
+                    ServerInitListener.needCheck = true;
+                }
+            } catch (Exception e) {
+                return ERROR_PARAMETER;
+            }
+        }
+
+        return "sendFilesSuccess";
+
+
     }
 
     private void doSendFolderHelp(FileSend folder,String owner) {

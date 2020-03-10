@@ -5,11 +5,15 @@ import com.sxw.server.util.ServerTimeUtil;
 public class Printer
 {
     public static Printer instance;
-    private static boolean isUIModel;
 
-    public static void init(final boolean isUIModel) {
-        Printer.isUIModel = isUIModel;
+    public static void init() {
         Printer.instance = new Printer();
+    }
+
+    public Printer(){
+        if (instance == null){
+            Printer.instance = new Printer();
+        }
     }
     
     public void print(final String context) {
