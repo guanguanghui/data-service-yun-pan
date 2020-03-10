@@ -318,7 +318,7 @@ public class AccountServiceImpl implements AccountService {
 		return gson.toJson(goodFriends);
 	}
 
-	private void getAllDepartmentTree(JSONArray nodes,JSONArray targetTreeArr){
+    private static void getAllDepartmentTree(JSONArray nodes, JSONArray targetTreeArr){
         if (nodes == null){
             return;
         }
@@ -326,36 +326,36 @@ public class AccountServiceImpl implements AccountService {
             targetTreeArr = new JSONArray();
         }
         for (int i=0;i<nodes.size();i++){
-            JSONObject node = (JSONObject) nodes.get(i);
-            JSONObject newNode = new JSONObject();
-            newNode.put("text",node.getString("name"));
-            newNode.put("href",node.getString("id"));
-            JSONArray tags = new JSONArray();
-            tags.add(0,""+node.getLong("deptTeacherNum"));
-            newNode.put("tags",tags);
+            JSONObject department = (JSONObject) nodes.get(i);
+            JSONObject newDepartment = new JSONObject();
 
-            JSONArray newTreeArrJson = new JSONArray();
-            JSONArray treeArrJson = node.getJSONArray("sunDepartment");
-            if (treeArrJson.size() == 0){
-                treeArrJson = node.getJSONArray("userOutputDtos");
-                for(int j=0;j<treeArrJson.size();j++ ){
-                    JSONObject userNode = (JSONObject) treeArrJson.get(i);
-                    JSONObject newUserNode = new JSONObject();
-                    newUserNode.put("text",userNode.getString("userName"));
-                    newUserNode.put("href",userNode.getString("userId"));
-                    JSONArray userTags = new JSONArray();
-                    userTags.add(0,"0");
-                    newUserNode.put("tags",userTags);
-                    newTreeArrJson.add(j,newUserNode);
-                }
-                newNode.put("nodes",newTreeArrJson);
-                targetTreeArr.set(i,newNode);
-                return;
+            // 添加部门节点的 text，href，tags
+            newDepartment.put("text",department.getString("name"));
+            newDepartment.put("href",department.getString("id"));
+            JSONArray tags = new JSONArray();
+            tags.add(0,""+department.getLong("deptTeacherNum"));
+            newDepartment.put("tags",tags);
+
+            // 添加组织节点的负责人
+            JSONArray userOutputDtos = department.getJSONArray("userOutputDtos");
+            JSONArray newUserOutputDtos = new JSONArray();
+            for(int k=0;k<userOutputDtos.size();k++){
+                JSONObject userOutputDto = (JSONObject) userOutputDtos.get(k);
+                JSONObject newUserOutputDto = new JSONObject();
+                newUserOutputDto.put("text",userOutputDto.getString("userName") + " [" + userOutputDto.getString("duty") + "]") ;
+                newUserOutputDto.put("href",userOutputDto.getString("userId"));
+                JSONArray userTags = new JSONArray();
+                userTags.add(0,"0");
+                newUserOutputDto.put("tags",userTags);
+                newUserOutputDtos.add(k,newUserOutputDto);
             }
 
-            newNode.put("nodes",newTreeArrJson);
-            targetTreeArr.set(i,newNode);
-            getAllDepartmentTree(treeArrJson,newTreeArrJson);
+            // 添加子部门
+            JSONArray sunDepartments = department.getJSONArray("sunDepartment");
+            newDepartment.put("nodes",newUserOutputDtos);
+            targetTreeArr.add(newDepartment);
+            getAllDepartmentTree(sunDepartments,newUserOutputDtos);
+
         }
     }
 
