@@ -10,11 +10,6 @@ public class Printer
         Printer.instance = new Printer();
     }
 
-    public Printer(){
-        if (instance == null){
-            Printer.instance = new Printer();
-        }
-    }
     
     public void print(final String context) {
         if (Printer.instance != null) {
