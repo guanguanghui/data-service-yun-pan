@@ -2045,6 +2045,7 @@ function showSendFilesAlert(txt){
 function sendFiles(){
     $("#receiverAlert").hide();
     $("#receiverAlert").text("");
+    $("#sendFilesButton").attr('disabled', true);
     $.ajax({
         url:'homeController/sendFiles.ajax',
         type:'POST',
@@ -2078,6 +2079,7 @@ function sendFiles(){
     });
 }
 
+
 // 显示发送文件模态框
 function showSendFilesModel() {
 
@@ -2100,35 +2102,55 @@ function showSendFilesModel() {
     	},
     	url : "homeController/getDepartmentInfo.ajax",
     	success : function(result) {
-    	    var $checkableTree = $('#receivePersonTree').treeview({
-              color: "#428bca",
-              expandIcon: "glyphicon glyphicon-chevron-right",
-              collapseIcon: "glyphicon glyphicon-chevron-down",
-              nodeIcon: "glyphicon glyphicon-user",
-              showCheckbox: true,
-              showTags: true,
-              data: eval("("+result+")"),
-              onNodeChecked: function(event, node) {
-                if(node.tags[0] == '0'){
-                    checkedReceivers.add(node.href);
-                }
-              },
-              onNodeUnchecked: function (event, node) {
-                checkedReceivers.delete(node.href);
-              }
-            });
-            var findCheckableNodess = function() {
-              return $checkableTree.treeview('search', [ $('#input-check-node').val(), { ignoreCase: true, exactMatch: true } ]);
-            };
-            $('#input-check-node').on('keyup', function (e) {
-              checkableNodes = findCheckableNodess();
-              $('.check-node').prop('disabled', !(checkableNodes.length >= 1));
-            });
+    	    switch (result){
+    	        case 'noDepartmentInfo':
+    	            $('#sendFilesMessage').html('提示：登陆失效，未获得组织结构信息！');
+    	            break;
+    	        case 'mustlogin':
+    	            window.location.href = "prv/login.html";
+    	            break;
+    	        default:
+    	            var $checkableTree = $('#receivePersonTree').treeview({
+                    color: "#428bca",
+                    expandIcon: "glyphicon glyphicon-chevron-right",
+                    collapseIcon: "glyphicon glyphicon-chevron-down",
+                    nodeIcon: "glyphicon glyphicon-user",
+                    showCheckbox: true,
+                    showTags: true,
+                    data: eval("("+result+")"),
+                    onNodeChecked: function(event, node) {
+                      // 人物节点
+                      if(node.tags[0] == '0' && node.nodes == undefined){
+                          checkedReceivers.add(node.href);
+                          $("#sendFilesButton").attr('disabled', false);
+                      }
+
+                    },
+                    onNodeUnchecked: function (event, node) {
+                      checkedReceivers.delete(node.href);
+                      if(checkedReceivers.size == 0){
+                          $("#sendFilesButton").attr('disabled', true);
+                      }
+                     }
+                    });
+                    var findCheckableNodess = function() {
+                      return $checkableTree.treeview('search', [ $('#input-check-node').val(), { ignoreCase: true, exactMatch: true } ]);
+                    };
+                    $('#input-check-node').on('keyup', function (e) {
+                      checkableNodes = findCheckableNodess();
+                      $('.check-node').prop('disabled', !(checkableNodes.length >= 1));
+                    });
+    	            break;
+    	    }
     	},
     	error : function() {
         	$('#sendFilesMessage').html('提示：出现意外错误，未获得组织结构信息！');
         }
     });
+
+    if(checkedReceivers.size == 0){
+        $("#sendFilesButton").attr('disabled', true);
+    }
 
 }
 
@@ -3148,6 +3170,9 @@ function fileServiceView(fileId,fileName){
     		// 获取链接
     		var dlurl=window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/"+(fileName.replace(/\'/g,''))+"?dkey="+result;
     		window.open('http://127.0.0.1:8012/onlinePreview?url='+(dlurl));
+    		 // 部署服务器  获取链接
+             // var dlurl=encodeURIComponent(window.location.protocol+"//"+"172.16.102.29:8080"+"/externalLinksController/downloadFileByKey/")+(fileName.replace(/\'/g,''))+"?dkey="+result;
+             // window.open('http://116.62.135.75:6667/onlinePreview?url='+(dlurl));
     	},
     	error:function(){
 
