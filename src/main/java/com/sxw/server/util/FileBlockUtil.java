@@ -261,6 +261,7 @@ public class FileBlockUtil {
 		Thread checkThread = new Thread(() -> {
 			// 检查是否存在未正确对应文件块的文件节点信息，若有则删除，从而确保文件节点信息不出现遗留问题
 			checkNodes("root");
+			checkNodes("recycle");
 			// 检查是否存在未正确对应文件节点的文件块，若有则删除，从而确保文件块不出现遗留问题
 			List<File> paths = new ArrayList<>();
 			paths.add(new File(ConfigureReader.instance().getFileBlockPath()));

@@ -26,6 +26,8 @@ import java.nio.charset.CharsetEncoder;
 @Order(2)
 public class MastLoginFilter implements Filter {
 
+    private static final String defaultPassword = "admin";
+
     @Resource
     private LogUtil lu;
     @Resource
@@ -66,7 +68,7 @@ public class MastLoginFilter implements Filter {
                     final String token = hsq.getParameter((String) hsq.getParameterMap().keySet().toArray()[0]);
                     TokenInfo ti = TokenResolver.readTokenInfo(token);
                     String account = ti.getUserId();
-                    String password = "admin";
+                    String password = defaultPassword;
 
                     String acountBaseInfo = sau.getAcountBaseInfo(ConfigureReader.instance().getAcountBaseInfoUrl(), token);
                     String userName = JSON.parseObject(acountBaseInfo).getJSONObject("data").getJSONObject("userDto").getString("userName");
@@ -75,21 +77,15 @@ public class MastLoginFilter implements Filter {
                     CharsetEncoder ios8859_1Encoder = Charset.forName("ISO-8859-1").newEncoder();
                     if (account != null && account.length() >= 3 && ios8859_1Encoder.canEncode(account)) {
                         if (account.indexOf("=") < 0 && account.indexOf(":") < 0) {
-                            if (ConfigureReader.instance().foundAccount(account)) {
-                                session.setAttribute("ACCOUNT", (Object) ti.getUserId());
-                                session.setAttribute("ACCOUNTNAME", userName);
-                                session.setAttribute("TOKEN", token);
-                                hsr.sendRedirect("/home.html");
-                            } else if (password != null && password.length() >= 3 && password.length() <= 32
-                                    && ios8859_1Encoder.canEncode(password)) {
+                            if (!ConfigureReader.instance().foundAccount(account)) {
                                 if (ConfigureReader.instance().createNewAccount(account, password)) {
                                     lu.writeSignUpEvent(hsq, account, password);
-                                    session.setAttribute("ACCOUNT", (Object) ti.getUserId());
-                                    session.setAttribute("ACCOUNTNAME", userName);
-                                    session.setAttribute("TOKEN", token);
-                                    hsr.sendRedirect("/home.html");
                                 }
                             }
+                            session.setAttribute("ACCOUNT", (Object) ti.getUserId());
+                            session.setAttribute("ACCOUNTNAME", userName);
+                            session.setAttribute("TOKEN", token);
+                            hsr.sendRedirect("/home.html");
                         }
                     }else {
                         hsr.sendRedirect(ConfigureReader.instance().getLoginUrl());

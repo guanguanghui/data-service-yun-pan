@@ -20,4 +20,12 @@ public class BusinessException extends RuntimeException{
     static {
         DEFAULT_ERROR_CODE = HttpStatus.BAD_REQUEST.value();
     }
+
+    public int getCode() {
+        return this.errorCode;
+    }
+
+    public Object getData() {
+        return this.errorData;
+    }
 }

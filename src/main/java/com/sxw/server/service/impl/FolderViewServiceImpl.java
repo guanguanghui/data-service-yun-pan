@@ -10,6 +10,8 @@ import com.sxw.server.util.ConfigureReader;
 import com.sxw.server.util.FolderUtil;
 import com.sxw.server.util.SxwFFMPEGLocator;
 import com.sxw.server.util.ServerTimeUtil;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.*;
 import javax.annotation.*;
 import com.sxw.server.mapper.*;
@@ -26,6 +28,7 @@ import com.google.gson.*;
 public class FolderViewServiceImpl implements FolderViewService {
 
     private static int SELECT_STEP = 256;// 每次查询的文件或文件夹的最大限额，即查询步进长度
+    private static int H5_SELECT_STEP = Integer.MAX_VALUE;// 每次查询的文件或文件夹的最大限额，即查询步进长度
 
     @Resource
     private FileBlockUtil fbu;
@@ -155,6 +158,130 @@ public class FolderViewServiceImpl implements FolderViewService {
     }
 
     @Override
+    public String getH5FolderViewToJson(final String fid, final HttpSession session, final HttpServletRequest request) {
+        final ConfigureReader cr = ConfigureReader.instance();
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
+
+        if (fid == null || fid.length() == 0) {
+            responseBodyDTO.setData("ERROR");
+            responseBodyDTO.setMessage("传入参数fid为空！");
+            responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+            return gson.toJson(responseBodyDTO);
+        }
+        Folder vf = this.fm.queryById(fid);
+        if (vf == null) {
+            responseBodyDTO.setData("NOT_FOUND");
+            responseBodyDTO.setMessage("没有找到该文件或文件夹！");
+            responseBodyDTO.setCode(HttpStatus.NOT_FOUND.value());
+            return gson.toJson(responseBodyDTO);// 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
+        }
+        final String account = (String) session.getAttribute("ACCOUNT");
+        final String accountName = (String) session.getAttribute("ACCOUNTNAME");
+        // 检查访问文件夹视图请求是否合法
+        if (!accessAuthUtil.accessFolder(vf, account)) {
+            responseBodyDTO.setData("notAccess");
+            responseBodyDTO.setCode(HttpStatus.FORBIDDEN.value());
+            return gson.toJson(responseBodyDTO);// 如无访问权限则直接返回该字段，令页面回到ROOT视图。
+        }
+        final FolderView fv = new FolderView();
+
+        fv.setFolder(vf);
+        fv.setParentList(this.fu.getParentList(fid));
+        long foldersOffset = this.fm.countByParentId(fid);// 第一波文件夹数据按照最后的记录作为查询偏移量
+        fv.setFoldersOffset(foldersOffset);
+        Map<String, Object> keyMap1 = new HashMap<>();
+        keyMap1.put("pid", fid);
+        long fOffset = foldersOffset - H5_SELECT_STEP;
+        keyMap1.put("offset", fOffset > 0L ? fOffset : 0L);// 进行查询
+        keyMap1.put("rows", H5_SELECT_STEP);
+        List<Folder> folders = this.fm.queryByParentIdSection(keyMap1);
+        List<Folder> fs = folders.parallelStream().filter(f -> {
+            return accessAuthUtil.accessViewFolder(f, account);
+        }).map(e -> {
+            if (accountName != null){
+                e.setFolderCreator(accountName);
+            }else if(account != null){
+                e.setFolderCreator(account);
+            }
+            return e;
+        }).collect(Collectors.toList());
+
+        fv.setFolderList(fs);
+        long filesOffset = this.flm.countByParentFolderId(fid);// 文件的查询逻辑与文件夹基本相同
+        fv.setFilesOffset(filesOffset);
+        Map<String, Object> keyMap2 = new HashMap<>();
+        keyMap2.put("pfid", fid);
+        long fiOffset = filesOffset - H5_SELECT_STEP;
+        keyMap2.put("offset", fiOffset > 0L ? fiOffset : 0L);
+        keyMap2.put("rows", H5_SELECT_STEP);
+        List<Node> files = this.flm.queryByParentFolderIdSection(keyMap2).stream().filter(
+                e -> accessAuthUtil.accessViewFile(e,account)
+        ).map(e -> {
+            if(accountName != null){
+                e.setFileCreator(accountName);
+            }else if (account != null){
+                e.setFileCreator(account);
+            }
+            return e;
+        }).collect(Collectors.toList());
+        fv.setFileList(files);
+        if (accountName != null) {
+            fv.setAccount(accountName);
+        }else if(account != null){
+            fv.setAccount(account);
+        }
+        if (ConfigureReader.instance().isAllowChangePassword()) {
+            fv.setAllowChangePassword("true");
+        } else {
+            fv.setAllowChangePassword("false");
+        }
+        if (ConfigureReader.instance().isAllowSignUp()) {
+            fv.setAllowSignUp("true");
+        } else {
+            fv.setAllowSignUp("false");
+        }
+        final List<String> authList = new ArrayList<String>();
+        if (cr.authorized(account, AccountAuth.UPLOAD_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("U");
+        }
+        if (cr.authorized(account, AccountAuth.CREATE_NEW_FOLDER, fu.getAllFoldersId(fid))) {
+            authList.add("C");
+        }
+        if (cr.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER, fu.getAllFoldersId(fid))) {
+            authList.add("D");
+        }
+        if (cr.authorized(account, AccountAuth.RENAME_FILE_OR_FOLDER, fu.getAllFoldersId(fid))) {
+            authList.add("R");
+        }
+        if (cr.authorized(account, AccountAuth.DOWNLOAD_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("L");
+            if (cr.isOpenFileChain()) {
+                fv.setShowFileChain("true");// 显示永久资源链接
+            } else {
+                fv.setShowFileChain("false");
+            }
+        }
+        if (cr.authorized(account, AccountAuth.MOVE_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("M");
+        }
+        if (cr.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("P");
+        }
+        if (cr.authorized(account, AccountAuth.SEND_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("S");
+        }
+        fv.setAuthList(authList);
+        fv.setPublishTime(ServerTimeUtil.accurateToMinute());
+        fv.setEnableFFMPEG(kfl.getFFMPEGExecutablePath() == null ? false : true);
+        fv.setEnableDownloadZip(ConfigureReader.instance().isEnableDownloadByZip());
+        responseBodyDTO.setData(gson.toJson(fv));
+        responseBodyDTO.setMessage("请求数据成功。");
+        responseBodyDTO.setCode(HttpStatus.OK.value());
+        return gson.toJson(responseBodyDTO);
+    }
+
+
+    @Override
     public String getReceiveViewToJson(final String fid, final HttpSession session, final HttpServletRequest request) {
         final ConfigureReader cr = ConfigureReader.instance();
         if (fid == null || fid.length() == 0) {
@@ -268,6 +395,135 @@ public class FolderViewServiceImpl implements FolderViewService {
         fv.setEnableDownloadZip(ConfigureReader.instance().isEnableDownloadByZip());
         return gson.toJson(fv);
     }
+
+    @Override
+    public String getH5ReceiveViewToJson(final String fid, final HttpSession session, final HttpServletRequest request) {
+        final ConfigureReader cr = ConfigureReader.instance();
+
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
+
+        if (fid == null || fid.length() == 0) {
+            responseBodyDTO.setData("ERROR");
+            responseBodyDTO.setMessage("传入参数fid为空！");
+            responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+            return gson.toJson(responseBodyDTO);
+        }
+
+        final String account = (String) session.getAttribute("ACCOUNT");
+        final String accountName = (String) session.getAttribute("ACCOUNTNAME");
+        // 初始化的收到文件根视图: receive
+        FileSend fs = this.fsm.queryById(fid);
+        Folder vf = this.fm.queryById(fs.getFileId());
+        if (vf == null) {
+            responseBodyDTO.setData("NOT_FOUND");
+            responseBodyDTO.setMessage("没有找到该文件或文件夹！");
+            responseBodyDTO.setCode(HttpStatus.NOT_FOUND.value());
+            return gson.toJson(responseBodyDTO);
+            // 如果用户请求一个不存在的文件夹，则返回“NOT_FOUND”，令页面回到ROOT视图
+        }
+        FolderSendView fsv = new FolderSendView(vf);
+        fsv.setId(fs.getId());
+        fsv.setPid(fs.getPid());
+
+        final FolderReceiveView fv = new FolderReceiveView();
+
+        fv.setFolder(fsv);
+        fv.setParentList(this.fu.getReceiveParentList(fid, account));
+
+        long foldersOffset = this.fsm.countByPid(fid);// 第一波文件夹数据按照最后的记录作为查询偏移量
+        fv.setFoldersOffset(foldersOffset);
+        Map<String, Object> keyMap1 = new HashMap<>();
+        keyMap1.put("pid", fid);
+        long fOffset = foldersOffset - H5_SELECT_STEP;
+        keyMap1.put("offset", fOffset > 0L ? fOffset : 0L);// 进行查询
+        keyMap1.put("rows", H5_SELECT_STEP);
+        List<FileSend> fsList = this.fsm.queryByPid(keyMap1).stream().filter(e -> {
+            return e.getFileReceiver().equals(account);
+        }).collect(Collectors.toList());
+        List<FolderSendView> folders = fsList.parallelStream()
+                .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName()))
+                .map(e -> {
+                    Folder folder = fm.queryById(e.getFileId());
+                    // 如果文件夹被删除
+                    if(folder == null){
+                        folder = new Folder();
+                        folder.setFolderId(e.getFileId());
+                        folder.setFolderParent(e.getFileParent());
+                        folder.setFolderName(e.getFileName() + "    （文件夹已被删除，失效！）");
+                    }else {
+                        folder.setFolderName(e.getFileName());
+                    }
+                    folder.setFolderCreator(e.getFileSenderName());
+                    folder.setFolderCreationDate(e.getFileSendDate());
+
+                    FolderSendView fsv0 = new FolderSendView(folder);
+                    fsv0.setId(e.getId());
+                    fsv0.setPid(e.getPid());
+                    return fsv0;
+                }).collect(Collectors.toList());
+        List<FileSendView> nodes = fsList.parallelStream()
+                .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
+                .map(e -> {
+                    Node node = flm.queryById(e.getFileId());
+                    if(node == null){
+                        node = new Node();
+                        node.setFileId(e.getFileId());
+                        node.setFileParentFolder(e.getFileParent());
+                        node.setFileSize("（文件已被删除，失效！）");
+                    }
+                    node.setFileName(e.getFileName());
+                    node.setFileCreationDate(e.getFileSendDate());
+                    node.setFileCreator(e.getFileSenderName());
+                    FileSendView fsv1 = new FileSendView(node);
+                    fsv1.setId(e.getId());
+                    fsv1.setPid(e.getPid());
+                    return fsv1;
+                }).collect(Collectors.toList());
+
+        fv.setFolderList(folders);
+        fv.setFileList(nodes);
+        if (accountName != null) {
+            fv.setAccount(accountName);
+        }else if(account != null){
+            fv.setAccount(account);
+        }
+        if (ConfigureReader.instance().isAllowChangePassword()) {
+            fv.setAllowChangePassword("true");
+        } else {
+            fv.setAllowChangePassword("false");
+        }
+        if (ConfigureReader.instance().isAllowSignUp()) {
+            fv.setAllowSignUp("true");
+        } else {
+            fv.setAllowSignUp("false");
+        }
+        final List<String> authList = new ArrayList<String>();
+
+        if (cr.authorized(account, AccountAuth.DOWNLOAD_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("L");
+            if (cr.isOpenFileChain()) {
+                fv.setShowFileChain("true");// 显示永久资源链接
+            } else {
+                fv.setShowFileChain("false");
+            }
+        }
+
+        if (cr.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("P");
+        }
+        if (cr.authorized(account, AccountAuth.SEND_FILES, fu.getAllFoldersId(fid))) {
+            authList.add("S");
+        }
+        fv.setAuthList(authList);
+        fv.setPublishTime(ServerTimeUtil.accurateToMinute());
+        fv.setEnableFFMPEG(kfl.getFFMPEGExecutablePath() == null ? false : true);
+        fv.setEnableDownloadZip(ConfigureReader.instance().isEnableDownloadByZip());
+        responseBodyDTO.setData(gson.toJson(fv));
+        responseBodyDTO.setCode(HttpStatus.OK.value());
+        responseBodyDTO.setMessage("请求数据成功。");
+        return gson.toJson(responseBodyDTO);
+    }
+
 
     @Override
     public String getRecycleBinViewToJson(final String fid, final HttpSession session, final HttpServletRequest request) {

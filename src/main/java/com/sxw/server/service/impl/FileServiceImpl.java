@@ -2403,9 +2403,9 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (node.getFileParentFolder().equals(locationpath) && node.getFileCreator().equals(account)) {
                         continue;
                     }
-                    if (!ConfigureReader.instance().accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
-                        return NO_AUTHORIZED;
-                    }
+                    // if (!ConfigureReader.instance().accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
+                    //     return NO_AUTHORIZED;
+                    // }
                     if (!ConfigureReader.instance().authorized(account, AccountAuth.COPY_FILES,
                             fu.getAllFoldersId(node.getFileParentFolder()))) {
                         return NO_AUTHORIZED;

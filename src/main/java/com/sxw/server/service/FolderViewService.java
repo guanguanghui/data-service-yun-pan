@@ -26,6 +26,8 @@ public interface FolderViewService{
 	 */
     String getFolderViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
 
+    String getH5FolderViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+
 	/**
 	 *
 	 * <h2>根据主键获取回收站文件夹视图</h2>
@@ -49,6 +51,8 @@ public interface FolderViewService{
 	 * @return java.lang.String 该文件夹视图的JSON格式，原型详见com.sxw.server.pojo.FolderView类。
 	 */
 	String getReceiveViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+
+	String getH5ReceiveViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
 
 
 	/**
