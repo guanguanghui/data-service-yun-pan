@@ -24,7 +24,7 @@ import java.io.IOException;
 @Order(5)
 public class H5Filter implements Filter {
 
-    private static final String TOKEN = "token";
+    private static final String TOKEN_HEADER_NAME = "token";
 
     private static final String defaultPassword = "admin";
 
@@ -43,7 +43,7 @@ public class H5Filter implements Filter {
         final HttpServletRequest request = (HttpServletRequest) servletRequest;
         final HttpServletResponse response = (HttpServletResponse) servletResponse;
         final HttpSession session = request.getSession();
-        String tokenString = request.getHeader(TOKEN);
+        String tokenString = request.getHeader(TOKEN_HEADER_NAME);
         try{
             TokenInfo ti = TokenResolver.readTokenInfo(tokenString);
             String account = ti.getUserId();
@@ -58,7 +58,7 @@ public class H5Filter implements Filter {
             }
             session.setAttribute("ACCOUNT", (Object) ti.getUserId());
             session.setAttribute("ACCOUNTNAME", userName);
-            session.setAttribute("TOKEN", TOKEN);
+            session.setAttribute("TOKEN", tokenString);
             filterChain.doFilter(request, response);
         }catch (Exception e) {
             ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
