@@ -4,8 +4,7 @@ import java.util.*;
 
 import com.sxw.server.model.Folder;
 import com.sxw.server.model.Node;
-import com.sxw.server.model.*;
-
+import io.swagger.annotations.ApiModelProperty;
 /**
  * 
  * <h2>文件夹视图封装POJO</h2>
@@ -17,22 +16,35 @@ import com.sxw.server.model.*;
  * @version 1.0
  */
 public class FolderView {
-
+	@ApiModelProperty("文件夹")
 	private Folder folder;
+	@ApiModelProperty("文件夹的绝对路径")
 	private List<Folder> parentList;
+	@ApiModelProperty("子文件夹列表")
 	private List<Folder> folderList;
+	@ApiModelProperty("子文件列表")
 	private List<Node> fileList;
+	@ApiModelProperty("用户名")
 	private String account;
+	@ApiModelProperty("用户权限列表")
 	private List<String> authList;
+	@ApiModelProperty("最后上传时间")
 	private String publishTime;
+	@ApiModelProperty("是否允许修改密码")
 	private String allowChangePassword;
+	@ApiModelProperty("是否显示文件分享链接")
 	private String showFileChain;
+	@ApiModelProperty("是否允许注册")
 	private String allowSignUp;
+	@ApiModelProperty("是否允许打包")
 	private boolean enableDownloadZip;
+	@ApiModelProperty("是否允许视频解码")
 	private boolean enableFFMPEG;
-	
+	@ApiModelProperty("文件夹列表查询偏移量")
 	private long foldersOffset;// 文件夹列表查询偏移量
+	@ApiModelProperty("文件列表查询偏移量")
 	private long filesOffset;// 文件列表查询偏移量
+	@ApiModelProperty("查询步长")
 	private int selectStep;// 查询步长
 
 	public Folder getFolder() {

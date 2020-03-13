@@ -12,6 +12,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<swagger.spring-boot-starter.version>1.7.0.RELEASE</swagger.spring-boot-starter.version>
 	</properties>
 
 	<!-- Spring Boot 版本组设置 -->
@@ -30,6 +31,12 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<!-- end 启动器 -->
+
+		<dependency>
+			<groupId>com.spring4all</groupId>
+			<artifactId>swagger-spring-boot-starter</artifactId>
+			<version>${swagger.spring-boot-starter.version}</version>
+		</dependency>
 
 		<!-- Gson json转化工具 -->
 		<dependency>

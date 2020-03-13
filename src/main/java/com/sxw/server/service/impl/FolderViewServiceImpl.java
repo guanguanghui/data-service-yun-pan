@@ -274,7 +274,7 @@ public class FolderViewServiceImpl implements FolderViewService {
         fv.setPublishTime(ServerTimeUtil.accurateToMinute());
         fv.setEnableFFMPEG(kfl.getFFMPEGExecutablePath() == null ? false : true);
         fv.setEnableDownloadZip(ConfigureReader.instance().isEnableDownloadByZip());
-        responseBodyDTO.setData(gson.toJson(fv));
+        responseBodyDTO.setData(fv);
         responseBodyDTO.setMessage("请求数据成功。");
         responseBodyDTO.setCode(HttpStatus.OK.value());
         return gson.toJson(responseBodyDTO);
@@ -518,7 +518,7 @@ public class FolderViewServiceImpl implements FolderViewService {
         fv.setPublishTime(ServerTimeUtil.accurateToMinute());
         fv.setEnableFFMPEG(kfl.getFFMPEGExecutablePath() == null ? false : true);
         fv.setEnableDownloadZip(ConfigureReader.instance().isEnableDownloadByZip());
-        responseBodyDTO.setData(gson.toJson(fv));
+        responseBodyDTO.setData(fv);
         responseBodyDTO.setCode(HttpStatus.OK.value());
         responseBodyDTO.setMessage("请求数据成功。");
         return gson.toJson(responseBodyDTO);

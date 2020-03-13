@@ -59,6 +59,8 @@ public class MastLoginFilter implements Filter {
             case "//homeController/askForAllowSignUpOrNot.ajax":
             case "/prv/signup.html":
             case "//prv/signup.html":
+            case "//swagger-ui.html":
+            case "/swagger-ui.html":
                 chain.doFilter(request, response);
                 return;
             case "//":

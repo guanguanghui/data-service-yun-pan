@@ -1,0 +1,4 @@
+swagger:
+  enabled: true
+  base-package: com.sxw
+  base-path: /h5Controller/*

@@ -43,6 +43,10 @@ public class H5Filter implements Filter {
         final HttpServletRequest request = (HttpServletRequest) servletRequest;
         final HttpServletResponse response = (HttpServletResponse) servletResponse;
         final HttpSession session = request.getSession();
+        if(session.getAttribute("ACCOUNT") != null){
+            filterChain.doFilter(request, response);
+            return;
+        }
         String tokenString = request.getHeader(TOKEN_HEADER_NAME);
         try{
             TokenInfo ti = TokenResolver.readTokenInfo(tokenString);

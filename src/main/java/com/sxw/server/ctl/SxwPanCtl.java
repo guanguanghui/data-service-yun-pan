@@ -1,8 +1,10 @@
 package com.sxw.server.ctl;
 
+import com.spring4all.swagger.EnableSwagger2Doc;
 import com.sxw.printer.Printer;
 import com.sxw.server.configation.MVC;
 import com.sxw.server.util.ConfigureReader;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.server.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.context.annotation.*;
@@ -29,6 +31,8 @@ import org.springframework.boot.web.server.*;
  * @version 1.0
  */
 @SpringBootApplication
+@EnableSwagger2Doc
+@EnableConfigurationProperties
 @Import({ MVC.class })
 public class SxwPanCtl {
 	private static ApplicationContext context;

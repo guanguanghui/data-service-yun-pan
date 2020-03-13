@@ -1,9 +1,11 @@
 package com.sxw.server.controller;
 
-import com.sxw.server.service.AccountService;
 import com.sxw.server.service.FolderViewService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -20,6 +22,7 @@ import javax.servlet.http.HttpSession;
  * @author ggh@sxw.cn
  * @version 1.0
  */
+@Api(value = "YunPanH5ViewApi", description = "智慧校园云盘H5", protocols = "application/json")
 @Controller
 @RequestMapping({ "/h5Controller" })
 public class H5RestController {
@@ -27,20 +30,14 @@ public class H5RestController {
 
     @Resource
     private FolderViewService fvs;
-
-    @RequestMapping(value = { "/getFolderView.ajax" }, produces = { CHARSET_BY_AJAX })
+    @ApiOperation(value = "查询文件夹空间视图#管光辉/20190312#", notes = "查询文件夹空间视图", nickname = "YunPanH5ViewApi-getFolderView")
+    @RequestMapping(value = { "/getFolderView.ajax" }, produces = { CHARSET_BY_AJAX }, method = RequestMethod.GET)
     @ResponseBody
     public String getFolderView(final String fid, final HttpSession session, final HttpServletRequest request) {
         return fvs.getH5FolderViewToJson(fid, session, request);
     }
-
-    @RequestMapping(value = { "/getRemainingFolderView.ajax" }, produces = { CHARSET_BY_AJAX })
-    @ResponseBody
-    public String getRemainingFolderView(final HttpServletRequest request) {
-        return fvs.getRemainingFolderViewToJson(request);
-    }
-
-    @RequestMapping(value = { "/getReceiveBinView.ajax" }, produces = { CHARSET_BY_AJAX })
+    @ApiOperation(value = "查询收到文件夹空间视图#管光辉/20190312#", notes = "查询收到文件夹空间视图", nickname = "YunPanH5ViewApi-getReceiveBinView")
+    @RequestMapping(value = { "/getReceiveBinView.ajax" }, produces = { CHARSET_BY_AJAX }, method = RequestMethod.GET)
     @ResponseBody
     public String getReceiveBinView(final String fid, final HttpSession session, final HttpServletRequest request) {
         return fvs.getH5ReceiveViewToJson(fid, session, request);
