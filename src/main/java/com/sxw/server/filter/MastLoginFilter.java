@@ -61,6 +61,8 @@ public class MastLoginFilter implements Filter {
             case "//prv/signup.html":
             case "//swagger-ui.html":
             case "/swagger-ui.html":
+            case "/getFolderView":
+            case "/getReceiveBinView":
                 chain.doFilter(request, response);
                 return;
             case "//":

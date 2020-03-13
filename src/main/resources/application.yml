@@ -1,4 +1,7 @@
 swagger:
   enabled: true
+  title: "智慧校园云盘H5"
+  description: "智慧校园云盘H5的Restful接口"
+  version: "1.0.27-RELEASE"
   base-package: com.sxw
   base-path: /h5Controller/*
