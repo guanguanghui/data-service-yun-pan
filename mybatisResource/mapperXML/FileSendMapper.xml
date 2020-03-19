@@ -15,6 +15,11 @@
 		<result column="file_type" jdbcType="VARCHAR" property="fileType" />
 	</resultMap>
 
+	<delete id="deleteById" parameterType="java.lang.String">
+		DELETE FROM FILE_SEND WHERE
+		id = #{id,jdbcType=VARCHAR}
+	</delete>
+
     <select id="queryFileSendTree" parameterType="java.lang.String"
             resultType="java.lang.String">
         SELECT CONCAT(id,",",pid) as id_pid FROM FILE_SEND WHERE file_receiver = #{account,jdbcType=VARCHAR}

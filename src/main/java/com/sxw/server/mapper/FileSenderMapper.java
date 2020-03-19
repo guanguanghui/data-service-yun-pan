@@ -25,4 +25,6 @@ public interface FileSenderMapper
     int insert(final FileSend f);
     
     int update(final FileSend f);
+
+    int deleteById(final String id);
 }

@@ -95,4 +95,5 @@ public interface ResourceService {
 	 */
 	public void getNoticeContext(HttpServletRequest request,HttpServletResponse response);
 
+	public String getFilePreViewUrl(HttpServletRequest request,HttpServletResponse response);
 }

@@ -2,6 +2,7 @@ package com.sxw.server.util;
 
 import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
+import com.sxw.server.enumeration.FileSendType;
 import com.sxw.server.mapper.FileSenderMapper;
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
@@ -262,6 +263,7 @@ public class FileBlockUtil {
 			// 检查是否存在未正确对应文件块的文件节点信息，若有则删除，从而确保文件节点信息不出现遗留问题
 			checkNodes("root");
 			checkNodes("recycle");
+            checkReceiveNodes("receive");
 			// 检查是否存在未正确对应文件节点的文件块，若有则删除，从而确保文件块不出现遗留问题
 			List<File> paths = new ArrayList<>();
 			paths.add(new File(ConfigureReader.instance().getFileBlockPath()));
@@ -323,6 +325,32 @@ public class FileBlockUtil {
 		for (Folder fl : folders) {
 			checkNodes(fl.getFolderId());
 		}
+	}
+
+	// 校对收到文件节点，要求收到的文件必须有对应的文件节点，否则将其移除（避免收到死的收到文件节点）
+	public void checkReceiveNodes(String pid){
+		Map<String, Object> keyMap1 = new HashMap<>();
+		keyMap1.put("pid", pid);
+		keyMap1.put("offset", 0L);// 进行查询
+		keyMap1.put("rows", Integer.MAX_VALUE);
+		List<FileSend> fileSends = fsm.queryByPid(keyMap1);
+		fileSends.stream().forEach(e -> {
+
+		    if(e.getFileType().equals(FileSendType.FILE.getName())){
+               Node node = fm.queryById(e.getFileId());
+               if(node == null){
+                   fsm.deleteById(e.getId());
+               }
+            }else if(e.getFileType().equals(FileSendType.FOLDER.getName())){
+		        Folder folder = flm.queryById(e.getFileId());
+		        if(folder == null){
+                    fu.deleteAllFolderSend(e.getId());
+                }else{
+                    checkReceiveNodes(e.getId());
+                }
+            }
+
+        });
 	}
 
 	/**

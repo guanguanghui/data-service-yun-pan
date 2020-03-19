@@ -4,6 +4,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.sxw.server.service.ResourceService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,8 @@ public class ExternalLinksController {
 	private ExternalDownloadService eds;//分享下载链接的相关处理
 	@Resource
 	private FileChainService fcs;
+	@Resource
+	private ResourceService rs;
 	
 	@RequestMapping("/getDownloadKey.ajax")
 	public @ResponseBody String getDownloadKey(HttpServletRequest request) {
@@ -43,5 +46,12 @@ public class ExternalLinksController {
 	public void chain(HttpServletRequest request,HttpServletResponse response) {
 		fcs.getResourceByChainKey(request, response);
 	}
+
+	// 获取文件预览url
+	@RequestMapping("/getFilePreViewUrl.ajax")
+	public @ResponseBody String getFilePreViewUrl(HttpServletRequest request, HttpServletResponse response) {
+		return rs.getFilePreViewUrl(request,response);
+	}
+
 
 }

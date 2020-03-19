@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import net.coobird.thumbnailator.Thumbnails;
 
 @Service
@@ -59,7 +61,8 @@ public class ShowPictureServiceImpl implements ShowPictureService {
 				if (accessAuthUtil.authorized(account, AccountAuth.DOWNLOAD_FILES,
 						fu.getAllFoldersId(p.getFileParentFolder()))
 						&& accessAuthUtil.accessFolder(flm.queryById(p.getFileParentFolder()), account)) {
-					final List<Node> nodes = this.fm.queryBySomeFolder(fileId);
+					final List<Node> nodes = this.fm.queryBySomeFolder(fileId).parallelStream()
+							.filter(e -> e.getFileCreator().equals(account)).collect(Collectors.toList());
 					final List<Node> pictureViewList = new ArrayList<Node>();
 					int index = 0;
 					for (final Node n : nodes) {

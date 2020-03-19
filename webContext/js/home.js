@@ -1719,12 +1719,54 @@ function createFileRow(fi,aL,aD,aR,aO){
 			+ '"'
 			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-play'></span> 播放</button>";
 			break;
-		case "docx":
+		case "djvu":
+        case "xps":
+        case "docx":
+        case "xlsx":
+        case "csv":
+        case "pptx":
+        case "txt":
+        case "docm":
+        case "dotx":
+        case "dotm":
+        case "dot":
+        case "doc":
+        case "odt":
+        case "fodt":
+        case "ott":
+        case "xlsm":
+        case "xltx":
+        case "xltm":
+        case "xlt":
+        case "xls":
+        case "ods":
+        case "fods":
+        case "ots":
+        case "pptm":
+        case "ppt":
+        case "ppsx":
+        case "ppsm":
+        case "pps":
+        case "potx":
+        case "potm":
+        case "pot":
+        case "odp":
+        case "fodp":
+        case "otp":
+        case "rtf":
+        case "mht":
+        case "html":
+        case "htm":
+        case "epub":
 			fileRow = fileRow
-			+ "<button onclick='docxView("
+			+ "<button onclick='openOfficeView("
 			+ '"'
 			+ fi.fileId
 			+ '"'
+            + ','
+            + '"'
+            + fi.fileName
+            + '"'
 			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
 			break;
 		case "txt":
@@ -1743,33 +1785,22 @@ function createFileRow(fi,aL,aD,aR,aO){
 			+ '"'
 			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
 			break;
-		case "ppt":
-		case "pptx":
-			fileRow = fileRow
-			+ "<button onclick='pptView("
-			+ '"'
-			+ fi.fileId
-			+ '"'
-			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
-			break;
-		case "zip":
-        case "rar":
-        case "jar":
-        case "tar":
-        case "gzip":
-        case "xlsx":
-        case "xls":
-		    fileRow = fileRow
-        			+ "<button onclick='fileServiceView("
-        			+ '"'
-        			+ fi.fileId
-        			+ '"'
-        			+ ','
-        			+ '"'
-        			+ fi.fileName
-        			+ '"'
-        			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
-		    break;
+//		case "zip":
+//        case "rar":
+//        case "jar":
+//        case "tar":
+//        case "gzip":
+//		    fileRow = fileRow
+//        			+ "<button onclick='fileServiceView("
+//        			+ '"'
+//        			+ fi.fileId
+//        			+ '"'
+//        			+ ','
+//        			+ '"'
+//        			+ fi.fileName
+//        			+ '"'
+//        			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
+//		    break;
 		default:
 			break;
 		}
@@ -3137,14 +3168,57 @@ function playVideo(fileId) {
 	window.open("quickview/video.html?fileId=" + fileId);
 }
 
+
+
 // 预览PDF文档
 function pdfView(filePath) {
 	window.open("/pdfview/web/viewer.html?file=/fileblocks/" + filePath);
 }
 
-// 预览Docx文档
-function docxView(fileId){
-	window.open("/pdfview/web/viewer.html?file=/resourceController/getWordView/" + fileId);
+// 预览office文档
+function openOfficeView(fileId,fileName){
+	//window.open("quickview/openoffice.html?fileId=" + fileId + "&fileName=" + fileName);
+	$.ajax({
+        	url:'externalLinksController/getDownloadKey.ajax',
+        	type:'POST',
+        	dataType:'text',
+        	data:{
+        		fId:fileId
+        	},
+        	success:function(result){
+        		// 获取链接
+        		var cleanFileName = fileName.replace(/\'/g,'');
+                var fileType = cleanFileName.substring(cleanFileName.lastIndexOf('\.'));
+                var dlurl=(window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/file")+"?dkey="+result;
+                $.ajax({
+                    url: 'externalLinksController/getFilePreViewUrl.ajax',
+                    type: 'POST',
+                    dataType:'text',
+                    data:{
+                    	resourceUrl:dlurl
+                    },
+                    success:function(result){
+                        if(result == 'NoAuth' || result == 'null'){
+                            return;
+                        }else{
+                            var viewUrl = result;
+                            window.open(viewUrl);
+                        }
+
+
+                    },
+                    error:function(){
+
+                    }
+                });
+
+        	},
+        	error:function(){
+
+        	}
+        });
+
+
 }
 
 // 预览TXT文档
@@ -3168,11 +3242,10 @@ function fileServiceView(fileId,fileName){
     	},
     	success:function(result){
     		// 获取链接
-    		var dlurl=window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/"+(fileName.replace(/\'/g,''))+"?dkey="+result;
-    		window.open('http://127.0.0.1:8012/onlinePreview?url='+(dlurl));
-    		 // 部署服务器  获取链接
-             // var dlurl=encodeURIComponent(window.location.protocol+"//"+"172.16.102.29:8080"+"/externalLinksController/downloadFileByKey/")+(fileName.replace(/\'/g,''))+"?dkey="+result;
-             // window.open('http://116.62.135.75:6667/onlinePreview?url='+(dlurl));
+    		var cleanFileName = fileName.replace(/\'/g,'');
+            var fileType = cleanFileName.substring(cleanFileName.lastIndexOf('\.'));
+            var dlurl=(window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/file")+"?dkey="+result+'&fullfilename=' + fileId + fileType;
+            window.open('http://127.0.0.1:8012/onlinePreview?url='+encodeURIComponent(dlurl));
     	},
     	error:function(){
 

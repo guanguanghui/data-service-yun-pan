@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.PowerPointType;
+import com.sxw.server.util.*;
 import org.springframework.stereotype.Service;
 
 import com.sxw.server.mapper.FolderMapper;
@@ -27,18 +28,6 @@ import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.Node;
 import com.sxw.server.pojo.VideoTranscodeThread;
 import com.sxw.server.service.ResourceService;
-import com.sxw.server.util.ConfigureReader;
-import com.sxw.server.util.ContentTypeMap;
-import com.sxw.server.util.Docx2PDFUtil;
-import com.sxw.server.util.FileBlockUtil;
-import com.sxw.server.util.FolderUtil;
-import com.sxw.server.util.SxwFFMPEGLocator;
-import com.sxw.server.util.LogUtil;
-import com.sxw.server.util.NoticeUtil;
-import com.sxw.server.util.PowerPoint2PDFUtil;
-import com.sxw.server.util.Txt2PDFUtil;
-import com.sxw.server.util.TxtCharsetGetter;
-import com.sxw.server.util.VideoTranscodeUtil;
 
 //资源服务类，所有处理非下载流请求的工作均在此完成
 @Service
@@ -70,6 +59,8 @@ public class ResourceServiceImpl implements ResourceService {
 	private ContentTypeMap ctm;
 	@Resource
 	private SxwFFMPEGLocator kfl;
+	@Resource
+	private SxwApiUtil sau;
 
 	// 提供资源的输出流，原理与下载相同，但是个别细节有区别
 	@Override
@@ -435,6 +426,16 @@ public class ResourceServiceImpl implements ResourceService {
 	@Override
 	public String getNoticeMD5() {
 		return nu.getMd5();
+	}
+
+	@Override
+	public String getFilePreViewUrl(HttpServletRequest request,HttpServletResponse response){
+		final String account = (String) request.getSession().getAttribute("ACCOUNT");
+		if(account == null){
+			return "NoAuth";
+		}
+		final String resourceUrl = request.getParameter("resourceUrl");
+		return sau.getFilePreViewUrl(resourceUrl);
 	}
 
 }

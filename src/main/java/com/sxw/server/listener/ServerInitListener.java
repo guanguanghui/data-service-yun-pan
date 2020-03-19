@@ -140,6 +140,8 @@ public class ServerInitListener implements ServletContextListener {
 						if (ConfigureReader.instance().removeAddedAuthByFolderId(invalidIdList)) {
 							Printer.instance.print("失效的额外权限设置已经清理完成。");
 						}
+						// 检查收到文件中已失效的文件
+						fbu.checkReceiveNodes("receive");
 						needCheck = false;
 					}
 					try {

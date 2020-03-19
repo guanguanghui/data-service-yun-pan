@@ -54,6 +54,8 @@ public interface FileService {
 
 	String doSendFiles(final HttpServletRequest request);
 
+	String doH5SendFiles(final HttpServletRequest request);
+
 	/**
 	 * 
 	 * <h2>上传文件夹前置检查</h2>

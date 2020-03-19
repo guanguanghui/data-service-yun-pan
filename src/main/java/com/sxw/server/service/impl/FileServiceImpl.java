@@ -9,11 +9,13 @@ import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.FileSend;
 import com.sxw.server.model.Folder;
 import com.sxw.server.model.Node;
+import com.sxw.server.pojo.ResponseBodyDTO;
 import com.sxw.server.service.FileService;
 import com.sxw.server.util.*;
 import javafx.util.Pair;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.mybatis.spring.MyBatisSystemException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.*;
 import javax.annotation.*;
 import com.sxw.server.enumeration.*;
@@ -161,8 +163,8 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
             return UPLOADERROR;
         }
         // 检查上传权限
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.UPLOAD_FILES, fu.getAllFoldersId(folderId))
-                || !ConfigureReader.instance().accessFolder(folder, account)) {
+        if (!accessAuthUtil.authorized(account, AccountAuth.UPLOAD_FILES, fu.getAllFoldersId(folderId))
+                || !accessAuthUtil.accessFolder(folder, account)) {
             return UPLOADERROR;
         }
         // 检查上传文件体积是否超限
@@ -262,8 +264,8 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
             return UPLOADERROR;
         }
         // 检查上传权限
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.UPLOAD_FILES, fu.getAllFoldersId(folderId))
-                || !ConfigureReader.instance().accessFolder(folder, account)) {
+        if (!accessAuthUtil.authorized(account, AccountAuth.UPLOAD_FILES, fu.getAllFoldersId(folderId))
+                || !accessAuthUtil.accessFolder(folder, account)) {
             return UPLOADERROR;
         }
         // 检查上传文件体积是否超限
@@ -285,7 +287,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     // 覆盖则找到已存在文件节点的File并将新内容写入其中，同时更新原节点信息（除了文件名、父目录和ID之外的全部信息）
                     case "cover":
                         // 其中覆盖操作同时要求用户必须具备删除权限
-                        if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                        if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                                 fu.getAllFoldersId(folderId))) {
                             return UPLOADERROR;
                         }
@@ -414,9 +416,9 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
         final Folder f = this.flm.queryById(file.getFileParentFolder());
         // 权限检查
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+        if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                 fu.getAllFoldersId(file.getFileParentFolder()))
-                || !ConfigureReader.instance().accessFolder(f, account)) {
+                || !accessAuthUtil.accessFolder(f, account)) {
             return NO_AUTHORIZED;
         }
         // 从文件块删除
@@ -426,6 +428,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         // 从节点删除
         if (this.fm.deleteById(fileId) > 0) {
             this.lu.writeDeleteFileEvent(request, file);
+            ServerInitListener.needCheck = true;
             return "deleteFileSuccess";
         }
         return "cannotDeleteFile";
@@ -447,9 +450,9 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
         final Folder f = this.flm.queryById(file.getFileParentFolder());
         // 权限检查
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+        if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                 fu.getAllFoldersId(file.getFileParentFolder()))
-                || !ConfigureReader.instance().accessFolder(f, account)) {
+                || !accessAuthUtil.accessFolder(f, account)) {
             return NO_AUTHORIZED;
         }
 
@@ -516,11 +519,11 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
             return ERROR_PARAMETER;
         }
         final Folder folder = flm.queryById(file.getFileParentFolder());
-        if (!ConfigureReader.instance().accessFolder(folder, account)) {
+        if (!accessAuthUtil.accessFolder(folder, account)) {
             return NO_AUTHORIZED;
         }
         // 权限检查
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.RENAME_FILE_OR_FOLDER,
+        if (!accessAuthUtil.authorized(account, AccountAuth.RENAME_FILE_OR_FOLDER,
                 fu.getAllFoldersId(file.getFileParentFolder()))) {
             return NO_AUTHORIZED;
         }
@@ -563,10 +566,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     continue;
                 }
                 final Folder folder = flm.queryById(file.getFileParentFolder());
-                if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                         fu.getAllFoldersId(file.getFileParentFolder()))) {
                     return NO_AUTHORIZED;
                 }
@@ -589,10 +592,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (folder == null) {
                     continue;
                 }
-                if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                         fu.getAllFoldersId(folder.getFolderParent()))) {
                     return NO_AUTHORIZED;
                 }
@@ -631,10 +634,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     continue;
                 }
                 final Folder folder = flm.queryById(file.getFileParentFolder());
-                if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                         fu.getAllFoldersId(file.getFileParentFolder()))) {
                     return NO_AUTHORIZED;
                 }
@@ -659,10 +662,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (folder == null) {
                     continue;
                 }
-                if (!ConfigureReader.instance().accessFolder(folder, account)) {
+                if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                         fu.getAllFoldersId(folder.getFolderParent()))) {
                     return NO_AUTHORIZED;
                 }
@@ -817,10 +820,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         if (targetFolder == null) {
             return ERROR_PARAMETER;
         }
-        if (!ConfigureReader.instance().accessFolder(targetFolder, account)) {
+        if (!accessAuthUtil.accessFolder(targetFolder, account)) {
             return NO_AUTHORIZED;
         }
-        if (!ConfigureReader.instance().authorized(account, AccountAuth.MOVE_FILES, fu.getAllFoldersId(locationpath))) {
+        if (!accessAuthUtil.authorized(account, AccountAuth.MOVE_FILES, fu.getAllFoldersId(locationpath))) {
             return NO_AUTHORIZED;
         }
         try {
@@ -839,10 +842,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (node.getFileParentFolder().equals(locationpath)) {
                     continue;
                 }
-                if (!ConfigureReader.instance().accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
+                if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!ConfigureReader.instance().authorized(account, AccountAuth.MOVE_FILES,
+                if (!accessAuthUtil.authorized(account, AccountAuth.MOVE_FILES,
                         fu.getAllFoldersId(node.getFileParentFolder()))) {
                     return NO_AUTHORIZED;
                 }
@@ -854,7 +857,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     }
                     switch (optMap.get(id)) {
                         case "cover":
-                            if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
+                            if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
                                     fu.getAllFoldersId(locationpath))) {
                                 return NO_AUTHORIZED;
                             }
@@ -1977,6 +1980,26 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
             }
         }
         return newFolderId;
+    }
+
+    @Override
+    public String doH5SendFiles(HttpServletRequest request){
+        String result = doSendFiles(request);
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
+        if(result.equals(ERROR_PARAMETER)){
+            responseBodyDTO.setData(ERROR_PARAMETER);
+            responseBodyDTO.setMessage("传入参数错误！");
+            responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+        }else if(result.equals(NO_AUTHORIZED)){
+            responseBodyDTO.setData(NO_AUTHORIZED);
+            responseBodyDTO.setMessage("没有权限，操作失败！");
+            responseBodyDTO.setCode(HttpStatus.UNAUTHORIZED.value());
+        }else if(result.equals("sendFilesSuccess")){
+            responseBodyDTO.setData("sendFilesSuccess");
+            responseBodyDTO.setMessage("发送成功！");
+            responseBodyDTO.setCode(HttpStatus.OK.value());
+        }
+        return gson.toJson(responseBodyDTO);
     }
 
 

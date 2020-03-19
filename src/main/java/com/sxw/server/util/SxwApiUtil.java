@@ -40,4 +40,20 @@ public class SxwApiUtil {
         ResponseEntity<String> result = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
         return result.getBody();
     }
+
+    public String getFilePreViewUrl(String resourceUrl){
+        try {
+            String docViewUrl = ConfigureReader.instance().getDocViewUrl();
+            HttpHeaders headers = new HttpHeaders();
+            HttpEntity entity = new HttpEntity(null, headers);
+            ResponseEntity<String> result = restTemplate.exchange(docViewUrl + resourceUrl, HttpMethod.POST, entity, String.class);
+            String viewUrl = JSON.parseObject(result.getBody()).getJSONObject("data").getString("viewUrl");
+            String host = docViewUrl.substring(0,docViewUrl.lastIndexOf("/view"));
+            return host + viewUrl;
+        }catch (Exception e){
+            return "null";
+        }
+
+    }
+
 }

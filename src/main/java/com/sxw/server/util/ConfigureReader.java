@@ -464,6 +464,13 @@ public class ConfigureReader {
 		return null;
 	}
 
+	public String getDocViewUrl(){
+		if (serverp != null && serverp.getProperty("docViewUrl") != null) {
+			return serverp.getProperty("docViewUrl");
+		}
+		return null;
+	}
+
 	public String getAllDepartmentUrl(){
 		if (serverp != null && serverp.getProperty("findAllDepartmentUrl") != null) {
 			return serverp.getProperty("findAllDepartmentUrl");

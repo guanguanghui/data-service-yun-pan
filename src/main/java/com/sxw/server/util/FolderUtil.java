@@ -2,6 +2,7 @@ package com.sxw.server.util;
 
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.FileDelFlag;
+import com.sxw.server.enumeration.FileSendType;
 import com.sxw.server.exception.FoldersTotalOutOfLimitException;
 import com.sxw.server.mapper.FileSenderMapper;
 import com.sxw.server.mapper.FolderMapper;
@@ -158,6 +159,29 @@ public class FolderUtil {
 				fim.update(f2);
 			}
 		}
+	}
+
+	public int deleteAllFolderSend(final String folderId) {
+		final Thread deleteChildFolderThread = new Thread(() -> this.iterationDeleteFolderSend(folderId));
+		deleteChildFolderThread.start();
+		return this.fsm.deleteById(folderId);
+	}
+
+	private void iterationDeleteFolderSend(final String folderId) {
+		Map<String, Object> keyMap1 = new HashMap<>();
+		keyMap1.put("pid", folderId);
+		keyMap1.put("offset", 0L);// 进行查询
+		keyMap1.put("rows", Integer.MAX_VALUE);
+		List<FileSend> fileSends = fsm.queryByPid(keyMap1);
+		fileSends.stream().forEach(e -> {
+			if(e.getFileType().equals(FileSendType.FILE.getName())){
+				fsm.deleteById(e.getId());
+			}else if(e.getFileType().equals(FileSendType.FOLDER.getName())){
+                fsm.deleteById(e.getId());
+				iterationDeleteFolderSend(e.getId());
+			}
+		});
+
 	}
 
 	public int restoreAllChildFolder(final String folderId, String locationpath) {
