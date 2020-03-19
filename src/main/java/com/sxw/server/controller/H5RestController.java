@@ -1,5 +1,6 @@
 package com.sxw.server.controller;
 
+import com.sxw.server.pojo.ParamSendFiles;
 import com.sxw.server.service.FileService;
 import com.sxw.server.service.FolderViewService;
 import io.swagger.annotations.Api;
@@ -7,6 +8,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.List;
 
 /**
  *
@@ -50,15 +53,14 @@ public class H5RestController {
     }
 
     @ApiOperation(value = "发送文件文件夹#管光辉/20200312#", notes = "发送文件文件夹", nickname = "YunPanH5ViewApi-sendCheckedFiles")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "strIdList", value = "['1234']", required = true, dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "strFidList", value = "['4567']", required = true, dataType = "string", paramType = "query"),
-            @ApiImplicitParam(name = "fileReceiver", value = "['abcd','efgh']", required = true, dataType = "string", paramType = "query")})
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "strIdList", value = "['1234']", required = true, dataType = "string", paramType = "query"),
+//            @ApiImplicitParam(name = "strFidList", value = "['4567']", required = true, dataType = "string", paramType = "query"),
+//            @ApiImplicitParam(name = "fileReceiver", value = "['abcd','efgh']", required = true, dataType = "string", paramType = "query")})
     @RequestMapping(value = { "/sendFiles" }, produces = { CHARSET_BY_AJAX }, method = RequestMethod.POST)
     @ResponseBody
-    public String sendCheckedFiles(final HttpServletRequest request) {
-        return fis.doH5SendFiles(request);
+    public String sendCheckedFiles(@RequestBody ParamSendFiles paramSendFiles,final HttpServletRequest request) {
+        return fis.doH5SendFiles(paramSendFiles,request);
     }
 
-
-}
+    }

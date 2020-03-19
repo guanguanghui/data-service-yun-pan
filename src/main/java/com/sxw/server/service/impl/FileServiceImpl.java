@@ -1,5 +1,6 @@
 package com.sxw.server.service.impl;
 
+import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.exception.FoldersTotalOutOfLimitException;
 import com.sxw.server.listener.ServerInitListener;
@@ -9,6 +10,7 @@ import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.FileSend;
 import com.sxw.server.model.Folder;
 import com.sxw.server.model.Node;
+import com.sxw.server.pojo.ParamSendFiles;
 import com.sxw.server.pojo.ResponseBodyDTO;
 import com.sxw.server.service.FileService;
 import com.sxw.server.util.*;
@@ -47,6 +49,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
     private static final String FOLDERS_TOTAL_OUT_OF_LIMIT = "foldersTotalOutOfLimit";// 文件夹数量超限标识
     private static final String FILES_TOTAL_OUT_OF_LIMIT = "filesTotalOutOfLimit";// 文件数量超限标识
     private static final String ERROR_PARAMETER = "errorParameter";// 参数错误标识
+    private static final String INTERNAL_SERVER_ERROR = "internalServerError";// 内部错误标识
     private static final String NO_AUTHORIZED = "noAuthorized";// 权限错误标识
     private static final String UPLOADSUCCESS = "uploadsuccess";// 上传成功标识
     private static final String UPLOADERROR = "uploaderror";// 上传失败标识
@@ -1983,22 +1986,153 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
     }
 
     @Override
-    public String doH5SendFiles(HttpServletRequest request){
-        String result = doSendFiles(request);
-        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
-        if(result.equals(ERROR_PARAMETER)){
-            responseBodyDTO.setData(ERROR_PARAMETER);
-            responseBodyDTO.setMessage("传入参数错误！");
-            responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
-        }else if(result.equals(NO_AUTHORIZED)){
-            responseBodyDTO.setData(NO_AUTHORIZED);
-            responseBodyDTO.setMessage("没有权限，操作失败！");
-            responseBodyDTO.setCode(HttpStatus.UNAUTHORIZED.value());
-        }else if(result.equals("sendFilesSuccess")){
-            responseBodyDTO.setData("sendFilesSuccess");
-            responseBodyDTO.setMessage("发送成功！");
-            responseBodyDTO.setCode(HttpStatus.OK.value());
+    public String doH5SendFiles(ParamSendFiles paramSendFiles, final HttpServletRequest request){
+        final List<String> idList = paramSendFiles.getStrIdList();
+        final List<String> fidList = paramSendFiles.getStrFidList();
+        final List<String> fileReceiversList = paramSendFiles.getFileReceivers();
+        final String account = (String) request.getSession().getAttribute("ACCOUNT");
+        String accountName = (String) request.getSession().getAttribute("ACCOUNTNAME");
+        if(accountName == null){
+            accountName = account;
         }
+
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
+
+        if(fileReceiversList == null || fileReceiversList.isEmpty()){
+            responseBodyDTO.setData(ERROR_PARAMETER);
+            responseBodyDTO.setMessage("接收者列表的为空！");
+            responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+            return gson.toJson(responseBodyDTO);
+        }
+
+        for(String fileReceiver: fileReceiversList){
+            Map<String, Object> key = new HashMap<>();
+            key.put("pid", "receive");
+            key.put("fileReceiver", fileReceiver);
+            key.put("offset", 0L);
+            key.put("rows", Integer.MAX_VALUE);
+
+            try {
+                for (final String id : idList) {
+                    if (id == null || id.length() <= 0) {
+                        responseBodyDTO.setData(ERROR_PARAMETER);
+                        responseBodyDTO.setMessage("文件列表中有一个空值！");
+                        responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+                        return gson.toJson(responseBodyDTO);
+                    }
+                    // 包含在自身文件空间里面和收到文件空间两种情况
+                    Node node;
+                    FileSend fileSend = this.fsm.queryById(id);
+                    if(fileSend != null){
+                        node = this.fm.queryById(fileSend.getFileId());
+                    }else{
+                        node = this.fm.queryById(id);
+                    }
+                    if (node == null) {
+                        responseBodyDTO.setData(ERROR_PARAMETER);
+                        responseBodyDTO.setMessage("参数中中有一个文件不存在！");
+                        responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+                        return gson.toJson(responseBodyDTO);
+                    }
+                    if (!accessAuthUtil.accessSendFile(node, account) ||
+                            !accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
+                                    fu.getAllFoldersId(node.getFileParentFolder()))) {
+                        responseBodyDTO.setData(NO_AUTHORIZED);
+                        responseBodyDTO.setMessage("没有权限，操作失败！");
+                        responseBodyDTO.setCode(HttpStatus.UNAUTHORIZED.value());
+                        return gson.toJson(responseBodyDTO);
+                    }
+
+                    FileSend fs = new FileSend();
+                    fs.setId(UUID.randomUUID().toString());
+                    fs.setPid("receive");
+                    fs.setFileId(id);
+                    fs.setFileName(node.getFileName());
+                    fs.setFileParent("receive");
+                    fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
+                    fs.setFileSender(account);
+                    fs.setFileSenderName(accountName);
+                    fs.setFileReceiver(fileReceiver);
+                    fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
+                    fs.setFileType(FileSendType.FILE.getName());
+                    List<FileSend> fileSends = fsm.queryByReceiver(key).parallelStream()
+                            .filter(e -> e.getFileType().equals(FileSendType.FILE.getName()))
+                            .collect(Collectors.toList());
+                    if (fileSends.stream().anyMatch(e -> e.getFileName().equals(node.getFileName()))) {
+                        // 文件名重复的处理
+                        fs.setFileName(FileNodeUtil.getNewReceiveFileName(fs.getFileName(),fileSends));
+                    }
+                    fsm.insert(fs);
+                    this.lu.writeSendFileEvent(request, fs);
+                }
+
+                for (final String fid : fidList) {
+                    if (fid == null || fid.length() <= 0) {
+                        responseBodyDTO.setData(ERROR_PARAMETER);
+                        responseBodyDTO.setMessage("文件夹列表中有一个空值！");
+                        responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+                        return gson.toJson(responseBodyDTO);
+                    }
+                    Folder folder;
+                    FileSend folderSend = this.fsm.queryById(fid);
+                    if (folderSend != null){
+                        folder = this.flm.queryById(folderSend.getFileId());
+                    }else{
+                        folder = this.flm.queryById(fid);
+                    }
+
+                    if (folder == null) {
+                        responseBodyDTO.setData(ERROR_PARAMETER);
+                        responseBodyDTO.setMessage("文件夹列表中有一个不存在的文件夹！");
+                        responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
+                        return gson.toJson(responseBodyDTO);
+                    }
+                    if (!accessAuthUtil.accessFolder(folder, account)||
+                            !accessAuthUtil.authorized(account, AccountAuth.SEND_FILES,
+                                    fu.getAllFoldersId(folder.getFolderParent()))) {
+                        responseBodyDTO.setData(NO_AUTHORIZED);
+                        responseBodyDTO.setMessage("没有权限，操作失败！");
+                        responseBodyDTO.setCode(HttpStatus.UNAUTHORIZED.value());
+                        return gson.toJson(responseBodyDTO);
+                    }
+
+                    FileSend fs = new FileSend();
+                    fs.setId(UUID.randomUUID().toString());
+                    fs.setPid("receive");
+                    fs.setFileId(folder.getFolderId());
+                    fs.setFileName(folder.getFolderName());
+                    fs.setFileParent("receive");
+                    fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
+                    fs.setFileSender(account);
+                    fs.setFileSenderName(accountName);
+                    fs.setFileReceiver(fileReceiver);
+                    fs.setFileSendState(FileSendState.ON_SENDER_AND_RECEIVER.getName());
+                    fs.setFileType(FileSendType.FOLDER.getName());
+
+                    List<FileSend> folderSends = fsm.queryByReceiver(key).parallelStream()
+                            .filter(e -> e.getFileType().equals(FileSendType.FOLDER.getName())).collect(Collectors.toList());
+
+                    if (folderSends.stream().anyMatch((e) -> e.getFileName().equals(folder.getFolderName()))) {
+                        // 文件夹名重复的处理
+                        fs.setFileName(FileNodeUtil.getNewReceiveFolderName(fs.getFileName(),folderSends));
+                    }
+                    doSendFolderHelp(fs,folder.getFolderCreator());
+                    this.lu.writeSendFolderEvent(request, fs);
+                }
+                if (fidList.size() > 0) {
+                    ServerInitListener.needCheck = true;
+                }
+            } catch (Exception e) {
+                responseBodyDTO.setData(INTERNAL_SERVER_ERROR);
+                responseBodyDTO.setMessage(e.getMessage());
+                responseBodyDTO.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+                return gson.toJson(responseBodyDTO);
+            }
+        }
+
+        responseBodyDTO.setData("sendFilesSuccess");
+        responseBodyDTO.setMessage("操作成功");
+        responseBodyDTO.setCode(HttpStatus.OK.value());
         return gson.toJson(responseBodyDTO);
     }
 
@@ -2013,6 +2147,9 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         if(accountName == null){
             accountName = account;
         }
+//        Printer.instance.print("fileReceivers:" + fileReceivers);
+//        Printer.instance.print("strIdList:" + strIdList);
+//        Printer.instance.print("strFidList:" + strFidList);
         final List<String> fileReceiversList = gson.fromJson(fileReceivers, new TypeToken<List<String>>() {
         }.getType());
 

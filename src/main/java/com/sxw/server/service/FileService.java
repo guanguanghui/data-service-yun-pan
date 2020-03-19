@@ -1,5 +1,6 @@
 package com.sxw.server.service;
 
+import com.sxw.server.pojo.ParamSendFiles;
 import org.springframework.web.multipart.*;
 import javax.servlet.http.*;
 
@@ -54,7 +55,7 @@ public interface FileService {
 
 	String doSendFiles(final HttpServletRequest request);
 
-	String doH5SendFiles(final HttpServletRequest request);
+	String doH5SendFiles(ParamSendFiles paramSendFiles, final HttpServletRequest request);
 
 	/**
 	 * 

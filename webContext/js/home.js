@@ -1666,14 +1666,6 @@ function createFileRow(fi,aL,aD,aR,aO){
 		// 对于各种特殊格式文件提供的预览和播放功能
 		var suffix=getSuffix(fi.fileName);
 		switch (suffix) {
-		case "mp4":
-			fileRow = fileRow
-			+ "<button onclick='playVideo("
-			+ '"'
-			+ fi.fileId
-			+ '"'
-			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-play'></span> 播放</button>";
-			break;
 		case "webm":
 		case "mov":
 		case "avi":
@@ -1689,26 +1681,18 @@ function createFileRow(fi,aL,aD,aR,aO){
 				+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-play'></span> 播放</button>";
 			}
 			break;
-		case "pdf":
-			fileRow = fileRow
-			+ "<button onclick='pdfView("
-			+ '"'
-			+ fi.filePath
-			+ '"'
-			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
-			break;
-		case "jpg":
-		case "jpeg":
-		case "gif":
-		case "png":
-		case "bmp":
-			fileRow = fileRow
-			+ "<button onclick='showPicture("
-			+ '"'
-			+ fi.fileId
-			+ '"'
-			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-picture'></span> 查看</button>";
-			break;
+//		case "jpg":
+//		case "jpeg":
+//		case "gif":
+//		case "png":
+//		case "bmp":
+//			fileRow = fileRow
+//			+ "<button onclick='showPicture("
+//			+ '"'
+//			+ fi.fileId
+//			+ '"'
+//			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-picture'></span> 查看</button>";
+//			break;
 		case "mp3":
 		case "wav":
 		case "ogg":
@@ -1719,45 +1703,47 @@ function createFileRow(fi,aL,aD,aR,aO){
 			+ '"'
 			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-play'></span> 播放</button>";
 			break;
-		case "djvu":
-        case "xps":
-        case "docx":
-        case "xlsx":
-        case "csv":
-        case "pptx":
-        case "txt":
-        case "docm":
-        case "dotx":
-        case "dotm":
-        case "dot":
+		case "jpg":
+        case "jpeg":
+        case "gif":
+        case "png":
+        case "bmp":
         case "doc":
+        case "docx":
+        case "wps":
         case "odt":
-        case "fodt":
-        case "ott":
-        case "xlsm":
-        case "xltx":
-        case "xltm":
-        case "xlt":
-        case "xls":
-        case "ods":
-        case "fods":
-        case "ots":
-        case "pptm":
-        case "ppt":
-        case "ppsx":
-        case "ppsm":
-        case "pps":
-        case "potx":
-        case "potm":
-        case "pot":
-        case "odp":
-        case "fodp":
-        case "otp":
         case "rtf":
-        case "mht":
+        case "xls":
+        case "xlsx":
+        case "et":
+        case "ods":
+        case "csv":
+        case "ppt":
+        case "pptx":
+        case "dps":
+        case "odp":
+        case "pdf":
+        case "txt":
+        case "zip":
+        case "rar":
+        case "tar":
+        case "7z":
+        case "dwg":
+        case "dxf":
+        case "dwf":
         case "html":
         case "htm":
-        case "epub":
+        case "xml":
+        case "js":
+        case "css":
+        case "java":
+        case "php":
+        case "sql":
+        case "mp3":
+        case "m4a":
+        case "mid":
+        case "wma":
+        case "mp4":
 			fileRow = fileRow
 			+ "<button onclick='openOfficeView("
 			+ '"'
@@ -1785,22 +1771,6 @@ function createFileRow(fi,aL,aD,aR,aO){
 			+ '"'
 			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
 			break;
-//		case "zip":
-//        case "rar":
-//        case "jar":
-//        case "tar":
-//        case "gzip":
-//		    fileRow = fileRow
-//        			+ "<button onclick='fileServiceView("
-//        			+ '"'
-//        			+ fi.fileId
-//        			+ '"'
-//        			+ ','
-//        			+ '"'
-//        			+ fi.fileName
-//        			+ '"'
-//        			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
-//		    break;
 		default:
 			break;
 		}
@@ -3189,7 +3159,7 @@ function openOfficeView(fileId,fileName){
         		// 获取链接
         		var cleanFileName = fileName.replace(/\'/g,'');
                 var fileType = cleanFileName.substring(cleanFileName.lastIndexOf('\.'));
-                var dlurl=(window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/file")+"?dkey="+result;
+                var dlurl=(window.location.protocol+"//"+window.location.host+"/externalLinksController/downloadFileByKey/" + cleanFileName)+"?dkey="+result;
                 $.ajax({
                     url: 'externalLinksController/getFilePreViewUrl.ajax',
                     type: 'POST',
