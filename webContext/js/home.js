@@ -3147,7 +3147,7 @@ function pdfView(filePath) {
 
 // 预览office文档
 function openOfficeView(fileId,fileName){
-	//window.open("quickview/openoffice.html?fileId=" + fileId + "&fileName=" + fileName);
+
 	$.ajax({
         	url:'externalLinksController/getDownloadKey.ajax',
         	type:'POST',
@@ -3174,8 +3174,6 @@ function openOfficeView(fileId,fileName){
                             var viewUrl = result;
                             window.open(viewUrl);
                         }
-
-
                     },
                     error:function(){
 

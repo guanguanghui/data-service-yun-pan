@@ -10,7 +10,7 @@ import java.util.Map;
 public class UrlTest {
     public static void main(String[] args) {
         String docViewUrl = "http://docview.sxw.cn:8000/view/url.json?url=";
-        String resourceUrl = "http://116.62.135.75:2181/externalLinksController/downloadFileByKey/teacher.xlsx?dkey=1101ec93-b34a-4186-b8de-0b12c40dce3a";
+        String resourceUrl = "http://116.62.135.75:2181/externalLinksController/chain/teacher%20(1).xlsx?ckey=Hb66pBL%2B5LJMrvwBEavaOOA47Kw2ZkhiV4Yitm%2Fu%2F9QiuIibud7Lie58FuC6BdT6";
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();

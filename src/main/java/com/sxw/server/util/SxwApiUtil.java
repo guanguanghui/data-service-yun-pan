@@ -1,6 +1,7 @@
 package com.sxw.server.util;
 
 import com.alibaba.fastjson.JSON;
+import com.sxw.printer.Printer;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -46,11 +47,14 @@ public class SxwApiUtil {
             String docViewUrl = ConfigureReader.instance().getDocViewUrl();
             HttpHeaders headers = new HttpHeaders();
             HttpEntity entity = new HttpEntity(null, headers);
-            ResponseEntity<String> result = restTemplate.exchange(docViewUrl + resourceUrl, HttpMethod.POST, entity, String.class);
+            String url = docViewUrl + resourceUrl;
+            Printer.instance.print("请求url：" + url);
+            ResponseEntity<String> result = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
             String viewUrl = JSON.parseObject(result.getBody()).getJSONObject("data").getString("viewUrl");
             String host = docViewUrl.substring(0,docViewUrl.lastIndexOf("/view"));
             return host + viewUrl;
         }catch (Exception e){
+            Printer.instance.print("getFilePreViewUrl: " + e.getMessage());
             return "null";
         }
 

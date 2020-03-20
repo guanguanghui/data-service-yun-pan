@@ -471,6 +471,14 @@ public class ConfigureReader {
 		return null;
 	}
 
+    public String getlocalFileResourceUrl(){
+        if (serverp != null && serverp.getProperty("localFileResourceUrl") != null) {
+            return serverp.getProperty("localFileResourceUrl");
+        }
+        return null;
+    }
+
+
 	public String getAllDepartmentUrl(){
 		if (serverp != null && serverp.getProperty("findAllDepartmentUrl") != null) {
 			return serverp.getProperty("findAllDepartmentUrl");
