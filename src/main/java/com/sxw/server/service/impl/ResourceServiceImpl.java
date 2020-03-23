@@ -10,9 +10,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.HashSet;
-
 import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -23,13 +20,11 @@ import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.PowerPointType;
 import com.sxw.server.mapper.PropertiesMapper;
-import com.sxw.server.model.Folder;
 import com.sxw.server.model.Propertie;
 import com.sxw.server.pojo.ResponseBodyDTO;
 import com.sxw.server.util.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.Node;
@@ -490,7 +485,7 @@ public class ResourceServiceImpl implements ResourceService {
                         responseBodyDTO.setCode(HttpStatus.BAD_REQUEST.value());
                         return gson.toJson(responseBodyDTO);
                     }
-                    String resourceUrl = ConfigureReader.instance().getlocalFileResourceUrl() + URLEncoder.encode(node.getFileName(),"utf-8") + "?ckey=" + URLEncoder.encode(ckey,"utf-8");
+                    String resourceUrl = ConfigureReader.instance().getlocalFileResourceUrl() + URLEncoder.encode(node.getFileName(), "utf-8") + "?ckey=" + URLEncoder.encode(ckey, "utf-8");
                     responseBodyDTO.setData(sau.getFilePreViewUrl(resourceUrl));
                     responseBodyDTO.setMessage("请求成功！");
                     responseBodyDTO.setCode(HttpStatus.OK.value());

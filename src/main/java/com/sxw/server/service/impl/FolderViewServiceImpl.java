@@ -386,9 +386,10 @@ public class FolderViewServiceImpl implements FolderViewService {
         if (cr.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(fid))) {
             authList.add("P");
         }
-        if (cr.authorized(account, AccountAuth.SEND_FILES, fu.getAllFoldersId(fid))) {
-            authList.add("S");
-        }
+        // 注释此代码可以限制收到的文件不能二次分享
+        // if (cr.authorized(account, AccountAuth.SEND_FILES, fu.getAllFoldersId(fid))) {
+        //     authList.add("S");
+        // }
         fv.setAuthList(authList);
         fv.setPublishTime(ServerTimeUtil.accurateToMinute());
         fv.setEnableFFMPEG(kfl.getFFMPEGExecutablePath() == null ? false : true);

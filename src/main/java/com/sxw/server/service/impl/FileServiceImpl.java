@@ -1277,6 +1277,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         return newFolderId;
     }
 
+    // 包含用户空间里面的文件复制操作和从收到文件的空间里面复制文件到用户的文件空间
     @Override
     public String doCopyFiles(HttpServletRequest request) {
         final String strIdList = request.getParameter("strIdList");
@@ -1291,9 +1292,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         if (!accessAuthUtil.accessFolder(targetFolder, account)) {
             return NO_AUTHORIZED;
         }
-        if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
-            return NO_AUTHORIZED;
-        }
+
         try {
             final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
             }.getType());
@@ -1315,13 +1314,8 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (node.getFileParentFolder().equals(locationpath) && node.getFileCreator().equals(account)) {
                     continue;
                 }
-                if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
-                    return NO_AUTHORIZED;
-                }
-                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
-                        fu.getAllFoldersId(node.getFileParentFolder()))) {
-                    return NO_AUTHORIZED;
-                }
+
+
                 if (fm.queryByParentFolderId(locationpath).parallelStream()
                         .filter(e -> e.getFileCreator().equals(account))
                         .anyMatch((e) -> e.getFileName().equals(fNode.getFileName()))) {
@@ -1455,7 +1449,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                         fu.getAllFoldersId(folder.getFolderParent()))) {
                     return NO_AUTHORIZED;
                 }
-                if (fid.equals(locationpath) || fu.getParentList(locationpath).parallelStream()
+                if (folder.getFolderId().equals(locationpath) || fu.getParentList(locationpath).parallelStream()
                         .anyMatch((e) -> e.getFolderId().equals(fFolder.getFolderId()))) {
                     return ERROR_PARAMETER;
                 }
@@ -1578,9 +1572,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         if (!accessAuthUtil.accessFolder(targetFolder, account)) {
             return NO_AUTHORIZED;
         }
-        if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
-            return NO_AUTHORIZED;
-        }
+
         try {
             final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
             }.getType());
@@ -1601,10 +1593,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
-                        fu.getAllFoldersId(node.getFileParentFolder()))) {
-                    return NO_AUTHORIZED;
-                }
+
                 if (fm.queryByParentFolderId(locationpath).parallelStream()
                         .filter(e -> e.getFileCreator().equals(account))
                         .anyMatch((e) -> e.getFileName().equals(node.getFileName()))) {
@@ -1613,10 +1602,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     }
                     switch (optMap.get(id)) {
                         case "cover":
-                            if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
-                                    fu.getAllFoldersId(locationpath))) {
-                                return NO_AUTHORIZED;
-                            }
+
                             final Node n = fm.queryByParentFolderId(locationpath).parallelStream()
                                     .filter((e) -> e.getFileName().equals(node.getFileName()) && e.getFileCreator().equals(account)).findFirst().get();
                             if (fm.deleteById(n.getFileId()) > 0) {
@@ -1730,10 +1716,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 if (!accessAuthUtil.accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
                 }
-                if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
-                        fu.getAllFoldersId(folder.getFolderParent()))) {
-                    return NO_AUTHORIZED;
-                }
+
                 if (fid.equals(locationpath) || fu.getParentList(locationpath).parallelStream()
                         .anyMatch((e) -> e.getFolderId().equals(folder.getFolderId()))) {
                     return ERROR_PARAMETER;
@@ -1751,10 +1734,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     switch (optMap.get(fid)) {
                         case "cover":
-                            if (!accessAuthUtil.authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
-                                    fu.getAllFoldersId(locationpath))) {
-                                return NO_AUTHORIZED;
-                            }
+
                             Folder f = flm.queryByParentId(locationpath).parallelStream()
                                     .filter((e) -> e.getFolderName().equals(folder.getFolderName()) && e.getFolderCreator().equals(account)).findFirst().get();
 
@@ -2645,8 +2625,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         Folder targetFolder = flm.queryById(locationpath);
         int needCopyfilesCount = 0;
         int needCopyFoldersCount = 0;
-        if (accessAuthUtil.accessFolder(targetFolder, account) && accessAuthUtil
-                .authorized(account, AccountAuth.COPY_FILES, fu.getAllFoldersId(locationpath))) {
+        if (accessAuthUtil.accessFolder(targetFolder, account)) {
             try {
                 final List<String> idList = gson.fromJson(strIdList, new TypeToken<List<String>>() {
                 }.getType());
@@ -2666,13 +2645,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (node.getFileParentFolder().equals(locationpath)) {
                         continue;
                     }
-                    if (!accessAuthUtil.accessFolder(flm.queryById(node.getFileParentFolder()), account)) {
-                        return NO_AUTHORIZED;
-                    }
-                    if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
-                            fu.getAllFoldersId(node.getFileParentFolder()))) {
-                        return NO_AUTHORIZED;
-                    }
+
                     if (fm.queryByParentFolderId(locationpath).parallelStream()
                             .filter(e -> e.getFileCreator().equals(account))
                             .anyMatch((e) -> e.getFileName().equals(node.getFileName()))) {
@@ -2693,13 +2666,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     if (folder.getFolderParent().equals(locationpath)) {
                         continue;
                     }
-                    if (!accessAuthUtil.accessFolder(folder, account)) {
-                        return NO_AUTHORIZED;
-                    }
-                    if (!accessAuthUtil.authorized(account, AccountAuth.COPY_FILES,
-                            fu.getAllFoldersId(folder.getFolderParent()))) {
-                        return NO_AUTHORIZED;
-                    }
+
                     if (folderId.equals(locationpath) || fu.getParentList(locationpath).parallelStream()
                             .anyMatch((e) -> e.getFolderId().equals(folder.getFolderId()))) {
                         return "CANT_COPY_TO_INSIDE:" + folder.getFolderName();

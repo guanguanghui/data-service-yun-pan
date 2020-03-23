@@ -1,12 +1,10 @@
 package com.sxw.server.listener;
 
 import javax.servlet.annotation.*;
-
 import com.sxw.printer.Printer;
 import com.sxw.server.util.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,11 +14,8 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.servlet.*;
-
 import com.sxw.server.mapper.FolderMapper;
-import com.sxw.server.util.*;
 
 /**
  * 
