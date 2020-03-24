@@ -471,6 +471,13 @@ public class ConfigureReader {
 		return null;
 	}
 
+	public String getSxwAuthenticationUrl(){
+		if (serverp != null && serverp.getProperty("sxwAuthenticationUrl") != null) {
+			return serverp.getProperty("sxwAuthenticationUrl");
+		}
+		return null;
+	}
+
     public String getlocalFileResourceUrl(){
         if (serverp != null && serverp.getProperty("localFileResourceUrl") != null) {
             return serverp.getProperty("localFileResourceUrl");

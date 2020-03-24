@@ -1,6 +1,5 @@
 package com.sxw.server.service.impl;
 
-import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.exception.FoldersTotalOutOfLimitException;
 import com.sxw.server.listener.ServerInitListener;
@@ -30,7 +29,6 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
@@ -1200,6 +1198,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
     }
 
+    // 复制文件夹的辅助方法。
     private String copyFolderHelp(Folder folder, String newFolderParent) {
         List<String> ipPidList = fm.queryNodeTree(folder.getFolderCreator());
         int folderConstraint = folder.getFolderConstraint();
@@ -1558,6 +1557,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
     }
 
+    // 此方法已不使用,逻辑已转移到doCopyFiles中.
     @Override
     public String doCopySendFiles(HttpServletRequest request){
         final String strIdList = request.getParameter("strIdList");
@@ -1895,6 +1895,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         }
     }
 
+    // 将文件和文件夹从收到文件空间复制到用户文件空间的辅助方法
     private String copySendFolderHelp(FileSend fs, String newFolderParent) {
         String receiver = fs.getFileReceiver();
         List<String> ipPidList = fsm.queryFileSendTree(receiver);

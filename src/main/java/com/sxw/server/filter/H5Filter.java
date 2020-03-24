@@ -1,6 +1,8 @@
 package com.sxw.server.filter;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
 import com.sxw.server.exception.BusinessException;
 import com.sxw.server.pojo.ResponseBodyDTO;
 import com.sxw.server.pojo.TokenInfo;
@@ -49,6 +51,20 @@ public class H5Filter implements Filter {
         }
         String tokenString = request.getHeader(TOKEN_HEADER_NAME);
         try{
+            // 校验token的合法性
+            String checkedResult = sau.checkToken(tokenString);
+            JSONObject checkedObject = JSON.parseObject(checkedResult);
+            Integer checkCode = checkedObject.getInteger("code");
+            if(checkCode != HttpStatus.OK.value()){
+                ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
+                responseBodyDTO.setCode(checkCode);
+                responseBodyDTO.setMessage(checkedObject.getString("message"));
+                responseBodyDTO.setData(checkedObject.getString("data"));
+                response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
+                response.getWriter().write(JSON.toJSONString(responseBodyDTO));
+                return;
+            }
+
             TokenInfo ti = TokenResolver.readTokenInfo(tokenString);
             String account = ti.getUserId();
             String password = defaultPassword;

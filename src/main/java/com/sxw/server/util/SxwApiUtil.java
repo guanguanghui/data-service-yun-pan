@@ -1,6 +1,7 @@
 package com.sxw.server.util;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.sxw.printer.Printer;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,16 @@ public class SxwApiUtil {
 
     @Resource
     private RestTemplate restTemplate;
+
+    public String checkToken(String token){
+        //token校验成功,认证
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON_UTF8));
+        headers.add("TOKEN",token);
+        HttpEntity<String> entity = new HttpEntity<String>(null, headers);
+        ResponseEntity<String> result = restTemplate.exchange(ConfigureReader.instance().getSxwAuthenticationUrl(), HttpMethod.POST, entity, String.class);
+        return result.getBody();
+    }
 
     public String getAcountBaseInfo(String url,String token){
         HttpHeaders headers = new HttpHeaders();
