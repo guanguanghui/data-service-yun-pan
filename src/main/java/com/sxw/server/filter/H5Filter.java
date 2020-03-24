@@ -50,13 +50,15 @@ public class H5Filter implements Filter {
             return;
         }
         String tokenString = request.getHeader(TOKEN_HEADER_NAME);
+        // 结果返回对象
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
         try{
             // 校验token的合法性
             String checkedResult = sau.checkToken(tokenString);
             JSONObject checkedObject = JSON.parseObject(checkedResult);
             Integer checkCode = checkedObject.getInteger("code");
             if(checkCode != HttpStatus.OK.value()){
-                ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
+
                 responseBodyDTO.setCode(checkCode);
                 responseBodyDTO.setMessage(checkedObject.getString("message"));
                 responseBodyDTO.setData(checkedObject.getString("data"));
@@ -81,7 +83,6 @@ public class H5Filter implements Filter {
             session.setAttribute("TOKEN", tokenString);
             filterChain.doFilter(request, response);
         }catch (Exception e) {
-            ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData("");
             if(e instanceof BusinessException){
