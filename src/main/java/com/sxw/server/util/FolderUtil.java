@@ -1,8 +1,6 @@
 package com.sxw.server.util;
 
-import com.sxw.server.enumeration.AccountAuth;
-import com.sxw.server.enumeration.FileDelFlag;
-import com.sxw.server.enumeration.FileSendType;
+import com.sxw.server.enumeration.*;
 import com.sxw.server.exception.FoldersTotalOutOfLimitException;
 import com.sxw.server.mapper.FileSenderMapper;
 import com.sxw.server.mapper.FolderMapper;
@@ -28,6 +26,46 @@ public class FolderUtil {
 	@Resource
 	private FileBlockUtil fbu;
 
+	public String getUserRootFolderId(String account){
+	    return UserRootSpace.ROOT.getVaue() + "_" + account;
+    }
+
+    public String getUserRootReceiveFolderId(String account){
+        return UserRootSpace.RECEIVE.getVaue() + "_" + account;
+    }
+
+    public String getUserRootRecycleFolderId(String account){
+        return UserRootSpace.RECYCLE.getVaue() + "_" + account;
+    }
+
+	/**
+	 *
+	 * <h2>创建根目录</h2>
+	 * <p>该方法用于用户的文件空间根目录，收到文件空间根目录和回收空间根目录。</p>
+	 * @author ggh@sxw.cn
+	 */
+	public void initUserFolder(String root,String account){
+		// 初始化用户根目录,收到文件根目录和回收站根目录
+		Folder rootFolder = fm.queryById(root);
+		rootFolder.setFolderCreator(account);
+		rootFolder.setFolderCreationDate(ServerTimeUtil.accurateToSecond());
+		rootFolder.setFolderConstraint(FolderConstraint.PRIVATE.getIndex());
+		// 根目录id的定义规则是："root" + account,"receive" + account,"recycle" + account
+		rootFolder.setFolderId(root + "_" + account);
+		rootFolder.setFolderParent(root);
+		fm.insertNewFolder(rootFolder);
+	}
+
+	public void initUserFileSend(String root,String account){
+		// 初始化用户收到文件的根目录
+		FileSend rootFs = fsm.queryById(root);
+		rootFs.setId(root + "_" + account);
+		rootFs.setPid(root);
+		rootFs.setFileType(FileSendType.FOLDER.getName());
+		rootFs.setFileReceiver(account);
+		fsm.insert(rootFs);
+	}
+
 	/**
 	 * 
 	 * <h2>获得指定文件夹的所有上级文件夹</h2>
@@ -45,7 +83,7 @@ public class FolderUtil {
 		Folder f = this.fm.queryById(fid);
 		final List<Folder> folderList = new ArrayList<Folder>();
 		if (f != null) {
-			while (!f.getFolderParent().equals("null") && !f.getFolderParent().equals("NULL") && folderList.size() < Integer.MAX_VALUE) {
+			while ((!f.getFolderParent().equals(UserRootSpace.ROOT.getVaue()) && !f.getFolderParent().equals(UserRootSpace.RECYCLE.getVaue())) && folderList.size() < Integer.MAX_VALUE) {
 				f = this.fm.queryById(f.getFolderParent());
 				folderList.add(f);
 			}
@@ -58,7 +96,7 @@ public class FolderUtil {
         FileSend f = this.fsm.queryById(fid);
         final List<String> fsList = new ArrayList<String>();
         if (f != null) {
-            while (!f.getPid().equals("NULL") && fsList.size() < Integer.MAX_VALUE) {
+            while (!f.getPid().equals(UserRootSpace.RECEIVE.getVaue()) && fsList.size() < Integer.MAX_VALUE) {
                 f = this.fsm.queryById(f.getPid());
                 fsList.add(f.getId());
             }
@@ -104,11 +142,11 @@ public class FolderUtil {
 		this.fm.deleteById(folderId);
 	}
 
-	public int fakeDeleteAllChildFolder(final String folderId) {
+	public int fakeDeleteAllChildFolder(final String folderId,final String account) {
 		this.iterationFakeDeleteFolder(folderId);
 		Map<String, String> map = new HashMap<>();
 		map.put("folderId", folderId);
-		map.put("locationpath", "recycle");
+		map.put("locationpath", getUserRootRecycleFolderId(account));
 		return this.fm.moveById(map);
 	}
 

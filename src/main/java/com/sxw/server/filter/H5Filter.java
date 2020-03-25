@@ -2,14 +2,11 @@ package com.sxw.server.filter;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
+import com.sxw.server.enumeration.UserRootSpace;
 import com.sxw.server.exception.BusinessException;
 import com.sxw.server.pojo.ResponseBodyDTO;
 import com.sxw.server.pojo.TokenInfo;
-import com.sxw.server.util.ConfigureReader;
-import com.sxw.server.util.LogUtil;
-import com.sxw.server.util.SxwApiUtil;
-import com.sxw.server.util.TokenResolver;
+import com.sxw.server.util.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,6 +31,8 @@ public class H5Filter implements Filter {
     private SxwApiUtil sau;
     @Resource
     private LogUtil lu;
+    @Resource
+    private FolderUtil fu;
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -53,12 +52,14 @@ public class H5Filter implements Filter {
         // 结果返回对象
         ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
         try{
+
+            TokenInfo ti = TokenResolver.readTokenInfo(tokenString);
+
             // 校验token的合法性
             String checkedResult = sau.checkToken(tokenString);
             JSONObject checkedObject = JSON.parseObject(checkedResult);
             Integer checkCode = checkedObject.getInteger("code");
             if(checkCode != HttpStatus.OK.value()){
-
                 responseBodyDTO.setCode(checkCode);
                 responseBodyDTO.setMessage(checkedObject.getString("message"));
                 responseBodyDTO.setData(checkedObject.getString("data"));
@@ -67,7 +68,6 @@ public class H5Filter implements Filter {
                 return;
             }
 
-            TokenInfo ti = TokenResolver.readTokenInfo(tokenString);
             String account = ti.getUserId();
             String password = defaultPassword;
 
@@ -75,6 +75,10 @@ public class H5Filter implements Filter {
             String userName = JSON.parseObject(acountBaseInfo).getJSONObject("data").getJSONObject("userDto").getString("userName");
             if (!ConfigureReader.instance().foundAccount(account)) {
                 if (ConfigureReader.instance().createNewAccount(account, password)) {
+                    // 初始化用户空间
+                    fu.initUserFolder(UserRootSpace.ROOT.getVaue(),account);
+                    fu.initUserFolder(UserRootSpace.RECEIVE.getVaue(),account);
+                    fu.initUserFolder(UserRootSpace.RECYCLE.getVaue(),account);
                     lu.writeSignUpEvent(request, account, password);
                 }
             }

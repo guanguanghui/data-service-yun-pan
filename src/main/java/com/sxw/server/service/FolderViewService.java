@@ -24,9 +24,9 @@ public interface FolderViewService{
 	 * @param request 请求对象
 	 * @return java.lang.String 该文件夹视图的JSON格式，原型详见com.sxw.server.pojo.FolderView类。
 	 */
-    String getFolderViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+    String getFolderViewToJson(String fid, final HttpSession session, final HttpServletRequest request);
 
-    String getH5FolderViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+    String getH5FolderViewToJson(String fid, final HttpSession session, final HttpServletRequest request);
 
 	/**
 	 *
@@ -38,7 +38,7 @@ public interface FolderViewService{
 	 * @param request 请求对象
 	 * @return java.lang.String 该文件夹视图的JSON格式，原型详见com.sxw.server.pojo.FolderView类。
 	 */
-    String getRecycleBinViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+    String getRecycleBinViewToJson(String fid, final HttpSession session, final HttpServletRequest request);
 
 	/**
 	 *
@@ -50,9 +50,9 @@ public interface FolderViewService{
 	 * @param request 请求对象
 	 * @return java.lang.String 该文件夹视图的JSON格式，原型详见com.sxw.server.pojo.FolderView类。
 	 */
-	String getReceiveViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+	String getReceiveViewToJson(String fid, final HttpSession session, final HttpServletRequest request);
 
-	String getH5ReceiveViewToJson(final String fid, final HttpSession session, final HttpServletRequest request);
+	String getH5ReceiveViewToJson(String fid, final HttpSession session, final HttpServletRequest request);
 
 
 	/**

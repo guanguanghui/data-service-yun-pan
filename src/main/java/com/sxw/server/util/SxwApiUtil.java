@@ -19,12 +19,13 @@ public class SxwApiUtil {
 
     public String checkToken(String token){
         //token校验成功,认证
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON_UTF8));
-        headers.add("TOKEN",token);
-        HttpEntity<String> entity = new HttpEntity<String>(null, headers);
-        ResponseEntity<String> result = restTemplate.exchange(ConfigureReader.instance().getSxwAuthenticationUrl(), HttpMethod.POST, entity, String.class);
-        return result.getBody();
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("app", "yunpan");
+        jsonObject.put("token", token);
+        String result = restTemplate.postForObject(ConfigureReader.instance().getSxwAuthenticationUrl(), jsonObject, String.class);
+        return result;
+
     }
 
     public String getAcountBaseInfo(String url,String token){

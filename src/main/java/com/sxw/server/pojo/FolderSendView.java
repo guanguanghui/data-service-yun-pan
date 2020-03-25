@@ -94,4 +94,8 @@ public class FolderSendView {
         this.folderConstraint = folder.getFolderConstraint();
         this.delFlag = folder.getDelFlag();
     }
+
+    public FolderSendView(){
+
+    }
 }

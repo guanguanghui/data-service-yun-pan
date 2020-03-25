@@ -1,6 +1,5 @@
 package com.sxw.server.service.impl;
 
-import com.google.gson.reflect.TypeToken;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.listener.ServerInitListener;
 import com.sxw.server.mapper.FolderMapper;
@@ -8,18 +7,12 @@ import com.sxw.server.mapper.NodeMapper;
 import com.sxw.server.model.Folder;
 import com.sxw.server.service.FolderService;
 import com.sxw.server.util.*;
-import com.sxw.server.service.*;
 import org.springframework.stereotype.*;
-
 import com.google.gson.Gson;
-
-import com.sxw.server.mapper.*;
 import javax.annotation.*;
 import javax.servlet.http.*;
 import com.sxw.server.enumeration.*;
-import com.sxw.server.model.*;
 import com.sxw.server.pojo.CreateNewFolderByNameRespons;
-import com.sxw.server.util.*;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -163,19 +156,10 @@ public class FolderServiceImpl implements FolderService {
 		if (folder == null) {
 			return "deleteFolderSuccess";
 		}
-		// 检查删除者是否具备删除目标的访问许可
-		if (!ConfigureReader.instance().accessFolder(folder, account)) {
-			return "noAuthorized";
-		}
-		// 检查权限
-		if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
-				fu.getAllFoldersId(folder.getFolderParent()))) {
-			return "noAuthorized";
-		}
 
 		// 执行迭代删除
 		final List<Folder> l = this.fu.getParentList(folderId);
-		if (this.fu.fakeDeleteAllChildFolder(folderId) > 0) {
+		if (this.fu.fakeDeleteAllChildFolder(folderId,account) > 0) {
 			this.lu.writeDeleteFolderEvent(request, folder, l);
 			ServerInitListener.needCheck = true;
 			return "deleteFolderSuccess";

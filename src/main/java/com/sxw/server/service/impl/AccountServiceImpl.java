@@ -3,36 +3,26 @@ package com.sxw.server.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
 import com.sxw.printer.Printer;
-import com.sxw.server.enumeration.AccountAuth;
+import com.sxw.server.enumeration.UserRootSpace;
 import com.sxw.server.enumeration.VCLevel;
-import com.sxw.server.mapper.FileSenderMapper;
-import com.sxw.server.model.FileSend;
-import com.sxw.server.model.Folder;
-import com.sxw.server.model.Node;
+import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.pojo.ChangePasswordInfoPojo;
 import com.sxw.server.pojo.LoginInfoPojo;
 import com.sxw.server.pojo.PublicKeyInfo;
 import com.sxw.server.pojo.SignUpInfoPojo;
 import com.sxw.server.service.AccountService;
 import com.sxw.server.util.*;
-import com.sxw.server.service.*;
 import org.springframework.stereotype.*;
-
 import com.google.gson.Gson;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import javax.annotation.Resource;
 import javax.servlet.http.*;
-import com.sxw.server.util.*;
-import com.sxw.server.pojo.*;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -42,6 +32,10 @@ public class AccountServiceImpl implements AccountService {
 	private LogUtil lu;
 	@Resource
 	private SxwApiUtil sau;
+	@Resource
+	private FolderMapper fm;
+	@Resource
+    private FolderUtil fu;
 
 	// 登录密钥有效期
 	private static final long TIME_OUT = 30000L;
@@ -284,6 +278,10 @@ public class AccountServiceImpl implements AccountService {
 					if (password != null && password.length() >= 3 && password.length() <= 32
 							&& ios8859_1Encoder.canEncode(password)) {
 						if (ConfigureReader.instance().createNewAccount(account, password)) {
+                            // 初始化用户空间
+                            fu.initUserFolder(UserRootSpace.ROOT.getVaue(),account);
+                            fu.initUserFolder(UserRootSpace.RECEIVE.getVaue(),account);
+                            fu.initUserFolder(UserRootSpace.RECYCLE.getVaue(),account);
 							lu.writeSignUpEvent(request, account, password);
 							session.setAttribute("ACCOUNT", account);
 							return "success";

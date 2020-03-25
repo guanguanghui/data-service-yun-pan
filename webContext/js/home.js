@@ -8,9 +8,9 @@ var isOnRecycleBin = false;
 var isOnReceiveBin = false;
 var recycle_path = "recycle";// 记录当前文件路径
 var receive_path = "receive";
-var receive_parentpath = "NULL";
-var parentpath = "null";// 记录当前文件路径的父级目录
-var recycle_parentpath = "NULL";// 记录当前文件路径的父级目录
+var receive_parentpath = "receive";
+var parentpath = "root";// 记录当前文件路径的父级目录
+var recycle_parentpath = "recycle";// 记录当前文件路径的父级目录
 var ap;// 音乐播放器对象
 var zipTimer;// 打包下载计时器
 var folderView;// 返回的文件系统视图对象
@@ -1111,7 +1111,7 @@ function openReceiveBinFolderView(){
         // 进入收到文件视图，显示退出收到文件视图
         $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出收件箱</button>");
         isOnReceiveBin = true;
-        if (receive_parentpath != null && receive_parentpath != "NULL" && receive_parentpath.length > 0) {
+        if (receive_parentpath != null && receive_parentpath != "receive" && receive_parentpath.length > 0) {
         	showReceiveBin(receive_parentpath);
         } else {
         	showReceiveBin("receive");
@@ -1136,7 +1136,7 @@ function openRecycleBinFolderView() {
         // 进入回收站，显示退出回收站图标
         $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出回收站</button>");
         isOnRecycleBin = true;
-        if (recycle_parentpath != null && recycle_parentpath != "NULL" && recycle_parentpath.length > 0) {
+        if (recycle_parentpath != null && recycle_parentpath != "recycle" && recycle_parentpath.length > 0) {
         	showRecycleBin(recycle_parentpath);
         } else {
         	showRecycleBin("recycle");
@@ -1492,7 +1492,7 @@ function refreshFolderView() {
 
 // 返回上一级文件夹
 function returnPF() {
-	if (parentpath != null && parentpath != "null") {
+	if (parentpath != null && parentpath != "root") {
 		showFolderView(parentpath);
 	} else {
 		showFolderView('root');
@@ -1501,7 +1501,7 @@ function returnPF() {
 
 // 返回收到文件的上一级文件夹
 function returnReceivePF() {
-	if (receive_parentpath != null && receive_parentpath != "NULL") {
+	if (receive_parentpath != null && receive_parentpath != "receive") {
 		showReceiveBin(receive_parentpath);
 	} else {
 		showReceiveBin('receive');
@@ -1510,7 +1510,7 @@ function returnReceivePF() {
 
 // 返回回收站上一级文件夹
 function returnRecyclePF() {
-	if (recycle_parentpath != null && recycle_parentpath != "NULL") {
+	if (recycle_parentpath != null && recycle_parentpath != "recycle") {
 		showRecycleBin(recycle_parentpath);
 	} else {
 		showRecycleBin('recycle');
@@ -1520,7 +1520,7 @@ function returnRecyclePF() {
 // 显示回收站内容
 function showRecycleBinFolderTable(folderView){
 	$("#foldertable").html("");
-	if (recycle_parentpath != null && recycle_parentpath != "NULL") {
+	if (recycle_parentpath != null && recycle_parentpath != "recycle") {
 		$("#foldertable")
 				.append(
 						"<tr onclick='returnRecyclePF()'><td><button onclick='' class='btn btn-link btn-xs'>../</button></td><td class='hidden-xs'>--</td><td>--</td><td class='hidden-xs'>--</td><td>--</td></tr>");
@@ -1561,7 +1561,7 @@ function showRecycleBinFolderTable(folderView){
 // 显示收到文件内容
 function showReceiveTable(folderView) {
 	$("#foldertable").html("");
-	if (receive_parentpath != null && receive_parentpath != "NULL" && receive_parentpath.length > 0) {
+	if (receive_parentpath != null && receive_parentpath != "receive" && receive_parentpath.length > 0) {
 		$("#foldertable")
 				.append(
 						"<tr onclick='returnReceivePF()'><td><button onclick='' class='btn btn-link btn-xs'>../</button></td><td class='hidden-xs'>--</td><td>--</td><td class='hidden-xs'>--</td><td>--</td></tr>");
@@ -1607,7 +1607,7 @@ function showReceiveTable(folderView) {
 // 显示文件夹内容
 function showFolderTable(folderView) {
 	$("#foldertable").html("");
-	if (parentpath != null && parentpath != "null") {
+	if (parentpath != null && parentpath != "root") {
 		$("#foldertable")
 				.append(
 						"<tr onclick='returnPF()'><td><button onclick='' class='btn btn-link btn-xs'>../</button></td><td class='hidden-xs'>--</td><td>--</td><td class='hidden-xs'>--</td><td>--</td></tr>");

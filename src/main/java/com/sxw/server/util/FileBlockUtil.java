@@ -3,6 +3,7 @@ package com.sxw.server.util;
 import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.FileSendType;
+import com.sxw.server.enumeration.FolderConstraint;
 import com.sxw.server.mapper.FileSenderMapper;
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
@@ -48,6 +49,7 @@ public class FileBlockUtil {
 	private FolderUtil fu;// 文件夹操作工具
 	@Resource
 	private AccessAuthUtil accessAuthUtil;
+
 	/**
 	 * 
 	 * <h2>清理临时文件夹</h2>

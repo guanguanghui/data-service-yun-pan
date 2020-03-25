@@ -7,15 +7,16 @@ import javax.servlet.*;
 import com.alibaba.fastjson.JSON;
 import com.google.gson.Gson;
 import com.sxw.printer.Printer;
+import com.sxw.server.enumeration.FolderConstraint;
+import com.sxw.server.enumeration.UserRootSpace;
 import com.sxw.server.exception.BusinessException;
+import com.sxw.server.mapper.FolderMapper;
+import com.sxw.server.model.Folder;
 import com.sxw.server.pojo.TokenInfo;
-import com.sxw.server.util.ConfigureReader;
+import com.sxw.server.util.*;
 
 import javax.servlet.http.*;
 
-import com.sxw.server.util.LogUtil;
-import com.sxw.server.util.SxwApiUtil;
-import com.sxw.server.util.TokenResolver;
 import org.springframework.core.annotation.Order;
 
 import java.io.*;
@@ -32,6 +33,8 @@ public class MastLoginFilter implements Filter {
     private LogUtil lu;
     @Resource
     private SxwApiUtil sau;
+    @Resource
+    private FolderUtil fu;
 
     public void init(final FilterConfig filterConfig) throws ServletException {
     }
@@ -83,6 +86,10 @@ public class MastLoginFilter implements Filter {
                         if (account.indexOf("=") < 0 && account.indexOf(":") < 0) {
                             if (!ConfigureReader.instance().foundAccount(account)) {
                                 if (ConfigureReader.instance().createNewAccount(account, password)) {
+                                    // 初始化用户空间
+                                    fu.initUserFolder(UserRootSpace.ROOT.getVaue(),account);
+                                    fu.initUserFolder(UserRootSpace.RECEIVE.getVaue(),account);
+                                    fu.initUserFolder(UserRootSpace.RECYCLE.getVaue(),account);
                                     lu.writeSignUpEvent(hsq, account, password);
                                 }
                             }

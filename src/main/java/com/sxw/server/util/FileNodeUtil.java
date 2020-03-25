@@ -68,7 +68,7 @@ public class FileNodeUtil {
 						final Statement state11 = conn.createStatement();
 						state11.execute("INSERT INTO FOLDER VALUES('root', 'ROOT', '--', '--', 'null', 0, 'false')");
 						state11.execute("INSERT INTO FOLDER VALUES('recycle', '回收站', '--', '--', 'NULL', 2, 'false')");
-						state11.execute("INSERT INTO FOLDER VALUES('receive', '收到文件', '--', '--', 'NULL', 2, 'false')");
+						// state11.execute("INSERT INTO FOLDER VALUES('receive', '收到文件', '--', '--', 'NULL', 2, 'false')");
 					}
 				}
 				state1.close();

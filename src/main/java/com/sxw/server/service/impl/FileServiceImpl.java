@@ -460,7 +460,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
         // 从节点删除
         file.setDelFlag(FileDelFlag.TRUE.getName());
         file.setFileCreationDate(String.valueOf(System.currentTimeMillis()));
-        file.setFileParentFolder("recycle");
+        file.setFileParentFolder(fu.getUserRootRecycleFolderId(account));
         if (this.fm.update(file) > 0) {
             this.lu.writeDeleteFileEvent(request, file);
             return "deleteFileSuccess";
@@ -647,7 +647,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 file.setDelFlag(FileDelFlag.TRUE.getName());
                 file.setFileCreator(account);
                 file.setFileCreationDate(String.valueOf(System.currentTimeMillis()));
-                file.setFileParentFolder("recycle");
+                file.setFileParentFolder(fu.getUserRootRecycleFolderId(account));
                 if (this.fm.update(file) > 0) {
                     // 日志记录
                     this.lu.writeDeleteFileEvent(request, file);
@@ -671,7 +671,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     return NO_AUTHORIZED;
                 }
                 final List<Folder> l = this.fu.getParentList(fid);
-                if (fu.fakeDeleteAllChildFolder(fid) <= 0) {
+                if (fu.fakeDeleteAllChildFolder(fid,account) <= 0) {
                     return "cannotDeleteFile";
                 } else {
                     this.lu.writeDeleteFolderEvent(request, folder, l);
@@ -920,7 +920,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     continue;
                 }
                 Folder parentFolder = this.flm.queryById(locationpath);
-                int pc = locationpath.equals("root") ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
+                int pc = locationpath.equals(fu.getUserRootFolderId(account)) ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
 
                 if (!ConfigureReader.instance().accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
@@ -951,7 +951,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                             folder.setFolderParent(locationpath);
                             if (this.flm.update(folder) > 0) {
                                 fu.changeChildFolderConstraint(folder.getFolderId(), pc);
-                                if (fu.fakeDeleteAllChildFolder(f.getFolderId()) > 0) {
+                                if (fu.fakeDeleteAllChildFolder(f.getFolderId(),account) > 0) {
                                     this.lu.writeMoveFileEvent(request, folder);
                                     break;
                                 }
@@ -1117,7 +1117,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 }
 
                 Folder parentFolder = this.flm.queryById(locationpath);
-                int pc = parentFolder.getFolderId().equals("root") ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
+                int pc = parentFolder.getFolderId().equals(fu.getUserRootFolderId(account)) ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
 
                 if (!ConfigureReader.instance().accessFolder(folder, account)) {
                     return NO_AUTHORIZED;
@@ -1146,7 +1146,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                                     .filter((e) -> e.getFolderName().equals(folder.getFolderName()) && e.getFolderCreator().equals(account)).findFirst().get();
                             fu.changeChildFolderConstraint(folder.getFolderId(), pc);
                             if (this.fu.restoreAllChildFolder(folder.getFolderId(), locationpath) > 0) {
-                                if (fu.fakeDeleteAllChildFolder(f.getFolderId()) > 0) {
+                                if (fu.fakeDeleteAllChildFolder(f.getFolderId(),account) > 0) {
                                     this.lu.writeRestoreFileEvent(request, folder);
                                     break;
                                 }
@@ -1453,7 +1453,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                     return ERROR_PARAMETER;
                 }
                 Folder parentFolder = this.flm.queryById(locationpath);
-                int pc = parentFolder.getFolderId().equals("root") ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
+                int pc = parentFolder.getFolderId().equals(fu.getUserRootFolderId(account)) ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
                 int folderConstraint = folder.getFolderConstraint();
                 if (flm.queryByParentId(locationpath).parallelStream()
                         .filter(e -> e.getFolderCreator().equals(account))
@@ -1723,7 +1723,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
                 }
 
                 Folder parentFolder = this.flm.queryById(locationpath);
-                int pc = parentFolder.getFolderId().equals("root") ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
+                int pc = parentFolder.getFolderId().equals(fu.getUserRootFolderId(account)) ? folder.getFolderConstraint() : parentFolder.getFolderConstraint();
                 int folderConstraint = folder.getFolderConstraint();
                 if (flm.queryByParentId(locationpath).parallelStream()
                         .filter(e -> e.getFolderCreator().equals(account))
@@ -1988,7 +1988,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
         for(String fileReceiver: fileReceiversList){
             Map<String, Object> key = new HashMap<>();
-            key.put("pid", "receive");
+            key.put("pid", fu.getUserRootReceiveFolderId(account));
             key.put("fileReceiver", fileReceiver);
             key.put("offset", 0L);
             key.put("rows", Integer.MAX_VALUE);
@@ -2026,10 +2026,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid("receive");
+                    fs.setPid(fu.getUserRootReceiveFolderId(account));
                     fs.setFileId(id);
                     fs.setFileName(node.getFileName());
-                    fs.setFileParent("receive");
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
@@ -2079,10 +2079,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid("receive");
+                    fs.setPid(fu.getUserRootReceiveFolderId(account));
                     fs.setFileId(folder.getFolderId());
                     fs.setFileName(folder.getFolderName());
-                    fs.setFileParent("receive");
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
@@ -2140,7 +2140,7 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
         for(String fileReceiver: fileReceiversList){
             Map<String, Object> key = new HashMap<>();
-            key.put("pid", "receive");
+            key.put("pid", fu.getUserRootReceiveFolderId(account));
             key.put("fileReceiver", fileReceiver);
             key.put("offset", 0L);
             key.put("rows", Integer.MAX_VALUE);
@@ -2173,10 +2173,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid("receive");
+                    fs.setPid(fu.getUserRootReceiveFolderId(account));
                     fs.setFileId(id);
                     fs.setFileName(node.getFileName());
-                    fs.setFileParent("receive");
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
@@ -2220,10 +2220,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid("receive");
+                    fs.setPid(fu.getUserRootReceiveFolderId(account));
                     fs.setFileId(folder.getFolderId());
                     fs.setFileName(folder.getFolderName());
-                    fs.setFileParent("receive");
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
