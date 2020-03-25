@@ -1745,7 +1745,7 @@ function createFileRow(fi,aL,aD,aR,aO){
         case "wma":
         case "mp4":
 			fileRow = fileRow
-			+ "<button onclick='openOfficeView("
+			+ "<button onclick='docQuickView("
 			+ '"'
 			+ fi.fileId
 			+ '"'
@@ -3138,15 +3138,18 @@ function playVideo(fileId) {
 	window.open("quickview/video.html?fileId=" + fileId);
 }
 
-
+// docview快速预览文档
+function docQuickView(fileId,fileName){
+    window.open("quickview/docview.html?fileId=" + fileId + "&fileName=" + fileName);
+}
 
 // 预览PDF文档
 function pdfView(filePath) {
 	window.open("/pdfview/web/viewer.html?file=/fileblocks/" + filePath);
 }
 
-// 预览office文档
-function openOfficeView(fileId,fileName){
+// docview普通预览版本
+function docView(fileId,fileName){
 
 	$.ajax({
         	url:'externalLinksController/getDownloadKey.ajax',
