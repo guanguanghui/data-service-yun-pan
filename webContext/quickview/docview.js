@@ -41,7 +41,7 @@ $.ajax({
                             return;
                         }else{
                             var viewUrl = result;
-                            window.location.href(viewUrl);
+                            window.location.replace(viewUrl);
                         }
                     },
                     error:function(){

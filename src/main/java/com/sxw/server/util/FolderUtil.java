@@ -12,6 +12,7 @@ import com.sxw.server.pojo.FolderSendView;
 import org.springframework.stereotype.*;
 import javax.annotation.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Component
@@ -25,6 +26,10 @@ public class FolderUtil {
 	private FileSenderMapper fsm;
 	@Resource
 	private FileBlockUtil fbu;
+
+	// 文件夹路径缓存池
+	private static ConcurrentHashMap<String, List<Folder>> parentFolderListMap = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<String, List<FolderSendView>> parentFolderSendListMap = new ConcurrentHashMap<>();
 
 	public String getUserRootFolderId(String account){
 	    return UserRootSpace.ROOT.getVaue() + "_" + account;
@@ -80,6 +85,9 @@ public class FolderUtil {
 	 *         指定文件夹的所有父级文件夹列表，以com.sxw.server.model.Folder形式封装。
 	 */
 	public List<Folder> getParentList(final String fid) {
+		if(parentFolderListMap.contains(fid)){
+			return parentFolderListMap.get(fid);
+		}
 		Folder f = this.fm.queryById(fid);
 		final List<Folder> folderList = new ArrayList<Folder>();
 		if (f != null) {
@@ -89,10 +97,14 @@ public class FolderUtil {
 			}
 		}
 		Collections.reverse(folderList);
+		parentFolderListMap.put(fid,folderList);
 		return folderList;
 	}
 
     public List<FolderSendView> getReceiveParentList(final String fid, final String receiver) {
+		if(parentFolderSendListMap.contains(fid)){
+			return parentFolderSendListMap.get(fid);
+		}
         FileSend f = this.fsm.queryById(fid);
         final List<String> fsList = new ArrayList<String>();
         if (f != null) {
@@ -109,6 +121,7 @@ public class FolderUtil {
 			fsv.setPid(fs.getPid());
             return fsv;
         }).collect(Collectors.toList());
+        parentFolderSendListMap.put(fid,folderList);
         return folderList;
     }
 

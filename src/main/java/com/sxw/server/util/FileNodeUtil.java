@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 import com.sxw.printer.Printer;
 import com.sxw.server.model.FileSend;
 import com.sxw.server.model.Folder;
@@ -92,9 +91,32 @@ public class FileNodeUtil {
 						state41.execute("CREATE INDEX file_name_index ON FILE (file_name)");
 						state41.close();
 					}
+					indexCount = state4.executeQuery("SHOW INDEX FROM FILE WHERE Key_name = 'file_parent_folder_index'");
+					if (!indexCount.next()) {
+						final Statement state42 = conn.createStatement();
+						state42.execute("CREATE INDEX file_parent_folder_index ON FILE (file_parent_folder)");
+						state42.close();
+					}
+					indexCount = state4.executeQuery("SHOW INDEX FROM FOLDER WHERE Key_name = 'folder_parent_index'");
+					if (!indexCount.next()) {
+						final Statement state43 = conn.createStatement();
+						state43.execute("CREATE INDEX folder_parent_index ON FOLDER (folder_parent)");
+						state43.close();
+					}
+					indexCount = state4.executeQuery("SHOW INDEX FROM FILE WHERE Key_name = 'file_path_index'");
+					if (!indexCount.next()) {
+						final Statement state42 = conn.createStatement();
+						state42.execute("CREATE INDEX file_path_index ON FILE (file_path)");
+						state42.close();
+					}
+
+					indexCount = state4.executeQuery("SHOW INDEX FROM FILE WHERE Key_name = 'file_md5_index'");
+					if (!indexCount.next()) {
+						final Statement state42 = conn.createStatement();
+						state42.execute("CREATE INDEX file_md5_index ON FILE (file_md5)");
+						state42.close();
+					}
 					state4.close();
-
-
 				} else {
 					final Statement state4 = conn.createStatement();
 					state4.execute("CREATE INDEX IF NOT EXISTS file_name_index ON FILE (file_name)");

@@ -2026,10 +2026,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid(fu.getUserRootReceiveFolderId(account));
+                    fs.setPid(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileId(id);
                     fs.setFileName(node.getFileName());
-                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
@@ -2079,10 +2079,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid(fu.getUserRootReceiveFolderId(account));
+                    fs.setPid(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileId(folder.getFolderId());
                     fs.setFileName(folder.getFolderName());
-                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
@@ -2173,10 +2173,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid(fu.getUserRootReceiveFolderId(account));
+                    fs.setPid(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileId(id);
                     fs.setFileName(node.getFileName());
-                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
@@ -2220,10 +2220,10 @@ public class FileServiceImpl extends RangeFileStreamWriter implements FileServic
 
                     FileSend fs = new FileSend();
                     fs.setId(UUID.randomUUID().toString());
-                    fs.setPid(fu.getUserRootReceiveFolderId(account));
+                    fs.setPid(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileId(folder.getFolderId());
                     fs.setFileName(folder.getFolderName());
-                    fs.setFileParent(fu.getUserRootReceiveFolderId(account));
+                    fs.setFileParent(fu.getUserRootReceiveFolderId(fileReceiver));
                     fs.setFileSendDate(ServerTimeUtil.accurateToSecond());
                     fs.setFileSender(account);
                     fs.setFileSenderName(accountName);
