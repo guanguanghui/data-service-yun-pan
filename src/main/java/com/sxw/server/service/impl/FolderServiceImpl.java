@@ -1,6 +1,5 @@
 package com.sxw.server.service.impl;
 
-import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.listener.ServerInitListener;
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
@@ -43,13 +42,10 @@ public class FolderServiceImpl implements FolderService {
 			return "errorParameter";
 		}
 		final Folder parentFolder = this.fm.queryById(parentId);
-		if (parentFolder == null || !ConfigureReader.instance().accessFolder(parentFolder, account)) {
+		if (parentFolder == null) {
 			return "errorParameter";
 		}
-		if (!ConfigureReader.instance().authorized(account, AccountAuth.CREATE_NEW_FOLDER,
-				fu.getAllFoldersId(parentId))) {
-			return "noAuthorized";
-		}
+
 		if (fm.queryByParentId(parentId).parallelStream()
 				.filter(e -> e.getFolderCreator().equals(account))
 				.anyMatch((e) -> e.getFolderName().equals(folderName))) {
@@ -124,15 +120,7 @@ public class FolderServiceImpl implements FolderService {
 		if (folder == null) {
 			return "deleteFolderSuccess";
 		}
-		// 检查删除者是否具备删除目标的访问许可
-		if (!ConfigureReader.instance().accessFolder(folder, account)) {
-			return "noAuthorized";
-		}
-		// 检查权限
-		if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
-				fu.getAllFoldersId(folder.getFolderParent()))) {
-			return "noAuthorized";
-		}
+
 		// 执行迭代删除
 		final List<Folder> l = this.fu.getParentList(folderId);
 		if (this.fu.deleteAllChildFolder(folderId) > 0) {
@@ -184,13 +172,7 @@ public class FolderServiceImpl implements FolderService {
 		if (folder == null) {
 			return "errorParameter";
 		}
-		if (!ConfigureReader.instance().accessFolder(folder, account)) {
-			return "noAuthorized";
-		}
-		if (!ConfigureReader.instance().authorized(account, AccountAuth.RENAME_FILE_OR_FOLDER,
-				fu.getAllFoldersId(folder.getFolderParent()))) {
-			return "noAuthorized";
-		}
+
 		final Folder parentFolder = this.fm.queryById(folder.getFolderParent());
 		int pc = parentFolder.getFolderConstraint();
 		if (folderConstraint != null) {
@@ -270,10 +252,7 @@ public class FolderServiceImpl implements FolderService {
 		if (p == null) {
 			return "deleteError";
 		}
-		if (!ConfigureReader.instance().authorized(account, AccountAuth.DELETE_FILE_OR_FOLDER,
-				fu.getAllFoldersId(parentId)) || !ConfigureReader.instance().accessFolder(p, account)) {
-			return "deleteError";
-		}
+
 		final Folder[] repeatFolders = this.fm.queryByParentId(parentId).parallelStream()
 				.filter((f) -> f.getFolderName()
 						.equals(new String(folderName.getBytes(Charset.forName("UTF-8")), Charset.forName("UTF-8"))))
@@ -309,15 +288,11 @@ public class FolderServiceImpl implements FolderService {
 			return gson.toJson(cnfbnr);
 		}
 		final Folder parentFolder = this.fm.queryById(parentId);
-		if (parentFolder == null || !ConfigureReader.instance().accessFolder(parentFolder, account)) {
+		if (parentFolder == null) {
 			cnfbnr.setResult("error");
 			return gson.toJson(cnfbnr);
 		}
-		if (!ConfigureReader.instance().authorized(account, AccountAuth.CREATE_NEW_FOLDER,
-				fu.getAllFoldersId(parentId))) {
-			cnfbnr.setResult("error");
-			return gson.toJson(cnfbnr);
-		}
+
 		if (fm.countByParentId(parentId) >= FileNodeUtil.MAXIMUM_NUM_OF_SINGLE_FOLDER) {
 			cnfbnr.setResult("foldersTotalOutOfLimit");
 			return gson.toJson(cnfbnr);

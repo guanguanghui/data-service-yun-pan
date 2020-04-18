@@ -2,6 +2,7 @@ package com.sxw.server.listener;
 
 import javax.servlet.annotation.*;
 import com.sxw.printer.Printer;
+import com.sxw.server.enumeration.UserRootSpace;
 import com.sxw.server.util.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -136,7 +137,7 @@ public class ServerInitListener implements ServletContextListener {
 							Printer.instance.print("失效的额外权限设置已经清理完成。");
 						}
 						// 检查收到文件中已失效的文件
-						fbu.checkReceiveNodes("receive");
+						fbu.checkReceiveNodes(UserRootSpace.RECEIVE.getVaue());
 						needCheck = false;
 					}
 					try {

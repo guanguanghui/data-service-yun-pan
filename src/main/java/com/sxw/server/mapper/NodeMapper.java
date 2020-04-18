@@ -1,7 +1,6 @@
 package com.sxw.server.mapper;
 
 import com.sxw.server.model.Node;
-import com.sxw.server.model.*;
 import java.util.*;
 
 public interface NodeMapper
@@ -16,19 +15,16 @@ public interface NodeMapper
 	 */
     List<Node> queryByParentFolderId(final String pfid);
 
-    /**
-     * 构造文件系统的树状结构
-     * @author ggh@sxw.cn
-     * @return java.util.List <id,pid></>列表
-     */
-    List<String> queryNodeTree(final String account);
+    List<Node> queryByAccount(final String account);
+
 
     /**
-     * 查询删除的文件和文件夹
+     * 查询删除的文件
      * @author ggh@sxw.cn
-     * @return java.util.List <file_id,folder_id></>列表
+     * @return java.util.List <Node></>列表
      */
-    List<String> queryDeletedFileOrFolder(String account);
+    List<Node> queryDeletedFiles(String account);
+
 
     /**
      * 

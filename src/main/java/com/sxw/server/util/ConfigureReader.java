@@ -775,7 +775,7 @@ public class ConfigureReader {
 
 		if ("true".equals(serverp.getProperty("mysql.enable"))) {
 			dbDriver = "com.mysql.cj.jdbc.Driver";
-			String url = serverp.getProperty("mysql.url", "127.0.0.1/kift");
+			String url = serverp.getProperty("mysql.url", "127.0.0.1/sxwpan");
 			if (url.indexOf("/") <= 0 || url.substring(url.indexOf("/")).length() == 1) {
 				Printer.instance.print("错误：自定义数据库的URL中必须指定数据库名称。");
 				return 8;

@@ -1107,52 +1107,64 @@ function sendRestoreFilesReq(){
 
 // 打开收到文件视图
 function openReceiveBinFolderView(){
-    if(!isOnReceiveBin){
-        // 进入收到文件视图，显示退出收到文件视图
-        $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出收件箱</button>");
-        isOnReceiveBin = true;
-        if (receive_parentpath != null && receive_parentpath != "receive" && receive_parentpath.length > 0) {
-        	showReceiveBin(receive_parentpath);
-        } else {
-        	showReceiveBin("receive");
-        }
+    // 进入收到文件视图，显示退出收到文件视图
+    $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='closeReceiveBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出收件箱</button>");
+    isOnReceiveBin = true;
+    if (receive_parentpath != null && receive_parentpath.length > 0) {
+    	showReceiveBin(receive_parentpath);
+    } else {
+    	showReceiveBin("receive");
+    }
+    // 清除其他视图：回收站视图关闭
+    if(isOnRecycleBin){
+        $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-trash'></span> 回收站</button>");
+        isOnRecycleBin = false;
+    }
+}
+// 关闭收到文件视图
+function closeReceiveBinFolderView(){
+    // 退出收到文件视图，显示收到文件图标
+    $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-envelope'></span> 收到文件</button>");
+    isOnReceiveBin = false;
+    var arr = document.cookie.match(new RegExp("(^| )folder_id=([^;]*)(;|$)"));
+    if (arr != null){
+    		showFolderView(unescape(arr[2]));// 显示记忆路径页面视图
     }else{
-        // 退出收到文件视图，显示收到文件图标
-        $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-envelope'></span> 收到文件</button>");
-        isOnReceiveBin = false;
-        var arr = document.cookie.match(new RegExp("(^| )folder_id=([^;]*)(;|$)"));
-        if (arr != null){
-        		showFolderView(unescape(arr[2]));// 显示记忆路径页面视图
-        }else{
-        		showFolderView("root");// 显示根节点页面视图
-        }
+    		showFolderView("root");// 显示根节点页面视图
     }
 }
 
 
 // 打开回收站视图
 function openRecycleBinFolderView() {
-    if(!isOnRecycleBin){
-        // 进入回收站，显示退出回收站图标
-        $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出回收站</button>");
-        isOnRecycleBin = true;
-        if (recycle_parentpath != null && recycle_parentpath != "recycle" && recycle_parentpath.length > 0) {
-        	showRecycleBin(recycle_parentpath);
-        } else {
-        	showRecycleBin("recycle");
-        }
-    }else{
-        // 退出回收站，显示回收站图标
-        $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-trash'></span> 回收站</button>");
-        isOnRecycleBin = false;
-        var arr = document.cookie.match(new RegExp("(^| )folder_id=([^;]*)(;|$)"));
-        if (arr != null){
-        		showFolderView(unescape(arr[2]));// 显示记忆路径页面视图
-        }else{
-        		showFolderView("root");// 显示根节点页面视图
-        }
+    // 进入回收站，显示退出回收站图标
+    $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='closeRecycleBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出回收站</button>");
+    isOnRecycleBin = true;
+    if (recycle_parentpath != null && recycle_parentpath.length > 0) {
+    	showRecycleBin(recycle_parentpath);
+    } else {
+    	showRecycleBin("recycle");
+    }
+    // 清除其他视图：收到文件视图关闭
+    if(isOnReceiveBin){
+        // 退出收到文件视图，显示收到文件图标
+        $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-envelope'></span> 收到文件</button>");
+        isOnReceiveBin = false;
     }
 
+}
+
+// 关闭回收站视图
+function closeRecycleBinFolderView() {
+    // 退出回收站，显示回收站图标
+    $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-trash'></span> 回收站</button>");
+    isOnRecycleBin = false;
+    var arr = document.cookie.match(new RegExp("(^| )folder_id=([^;]*)(;|$)"));
+    if (arr != null){
+    		showFolderView(unescape(arr[2]));// 显示记忆路径页面视图
+    }else{
+    		showFolderView("root");// 显示根节点页面视图
+    }
 }
 
 // 进入某一文件夹
@@ -1362,12 +1374,16 @@ function showAccountView(folderView) {
 								+ folderView.account
 								+ "] <span class='glyphicon glyphicon-off' aria-hidden='true'></span></button>");
 		if(isOnReceiveBin){
-		    $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出收件箱</button>");
+		    $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='closeReceiveBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出收件箱</button>");
 		}else{
 		    $("#receiveBin").html("<button class='btn btn-link navbar-btn' onclick='openReceiveBinFolderView()'><span class='glyphicon glyphicon-envelope'></span> 收到文件</button>");
 		}
+		if(isOnRecycleBin){
+		    $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='closeRecycleBinFolderView()'><span class='glyphicon glyphicon-log-out'></span> 退出回收站</button>");
+		}else{
+		    $("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-trash'></span> 回收站</button>");
+		}
 
-		$("#recycleBin").html("<button class='btn btn-link navbar-btn' onclick='openRecycleBinFolderView()'><span class='glyphicon glyphicon-trash'></span> 回收站</button>");
 
 		if(folderView.allowChangePassword == 'true'){
 			$("#tb")
@@ -1482,7 +1498,12 @@ function showPublishTime(folderView) {
 
 // 刷新文件夹视图
 function refreshFolderView() {
-	if (locationpath != null && locationpath.length > 0) {
+
+	if(isOnRecycleBin && recycle_path.length > 0){
+	    showRecycleBin(recycle_path);
+	}else if(isOnReceiveBin && receive_path.length > 0){
+	    showReceiveBin(receive_path);
+	}else if (locationpath != null && locationpath.length > 0) {
 		showFolderView(locationpath);
 	} else {
 		showFolderView('root');
@@ -1669,6 +1690,7 @@ function createFileRow(fi,aL,aD,aR,aO){
 		case "webm":
 		case "mov":
 		case "avi":
+		case "mp4":
 		case "wmv":
 		case "mkv":
 		case "flv":
@@ -1739,21 +1761,30 @@ function createFileRow(fi,aL,aD,aR,aO){
         case "java":
         case "php":
         case "sql":
-        case "mp3":
-        case "m4a":
-        case "mid":
-        case "wma":
-        case "mp4":
-			fileRow = fileRow
-			+ "<button onclick='docQuickView("
-			+ '"'
-			+ fi.fileId
-			+ '"'
-            + ','
-            + '"'
-            + fi.fileName
-            + '"'
-			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
+            if(fi.fileLength == 0){
+                fileRow = fileRow
+                			+ "<button disabled='disabled' onclick='docQuickView("
+                			+ '"'
+                			+ fi.fileId
+                			+ '"'
+                            + ','
+                            + '"'
+                            + fi.fileName
+                            + '"'
+                			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
+            }else{
+                fileRow = fileRow
+                			+ "<button onclick='docQuickView("
+                			+ '"'
+                			+ fi.fileId
+                			+ '"'
+                            + ','
+                            + '"'
+                            + fi.fileName
+                            + '"'
+                			+ ")' class='btn btn-link btn-xs'><span class='glyphicon glyphicon-eye-open'></span> 预览</button>";
+            }
+
 			break;
 		case "txt":
 		case "json":
@@ -2079,6 +2110,61 @@ function sendFiles(){
         }
     });
 }
+// tree-view的辅助方法
+function getChildNodeIdArr(node) {
+    var ts = [];
+    if (node.nodes) {
+        for (x in node.nodes) {
+            ts.push(node.nodes[x].nodeId);
+            if (node.nodes[x].nodes) {
+                var getNodeDieDai = getChildNodeIdArr(node.nodes[x]);
+                for (j in getNodeDieDai) {
+                    ts.push(getNodeDieDai[j]);
+                }
+            }
+        }
+    } else {
+        ts.push(node.nodeId);
+    }
+    return ts;
+}
+
+function getChildNodeArr(node) {
+    var ts = [];
+    if (node.nodes) {
+        for (x in node.nodes) {
+            ts.push(node.nodes[x]);
+            if (node.nodes[x].nodes) {
+                var getNodeDieDai = getChildNodeArr(node.nodes[x]);
+                for (j in getNodeDieDai) {
+                    ts.push(getNodeDieDai[j]);
+                }
+            }
+        }
+    } else {
+        ts.push(node);
+    }
+    return ts;
+}
+
+
+function setParentNodeCheck(node) {
+    var parentNode = $("#receivePersonTree").treeview("getNode", node.parentId);
+    if (parentNode.nodes) {
+        var checkedCount = 0;
+        for (x in parentNode.nodes) {
+            if (parentNode.nodes[x].state.checked) {
+                checkedCount ++;
+            } else {
+                break;
+            }
+        }
+        if (checkedCount === parentNode.nodes.length) {
+            $("#receivePersonTree").treeview("checkNode", parentNode.nodeId);
+            setParentNodeCheck(parentNode);
+        }
+    }
+}
 
 
 // 显示发送文件模态框
@@ -2121,26 +2207,46 @@ function showSendFilesModel() {
                     data: eval("("+result+")"),
                     onNodeChecked: function(event, node) {
                       // 人物节点
-                      if(node.tags[0] == '0' && node.nodes == undefined){
-                          checkedReceivers.add(node.href);
+                      var selectNodeIds = getChildNodeIdArr(node); //获取所有子节点
+                      if (selectNodeIds) { //子节点不为空，则选中所有子节点
+                          $('#receivePersonTree').treeview('checkNode', [selectNodeIds, { silent: true }]);
+                      }
+                      var selectNodes = getChildNodeArr(node);
+                      if(selectNodes){
+                        selectNodes.forEach((item,index,array)=>{
+                            if(item.tags[0] == '0' && item.nodes == undefined){
+                                checkedReceivers.add(item.href);
+                            }
+                        });
+                      }
+
+                      var parentNode = $("#receivePersonTree").treeview("getNode", node.parentId);
+                      setParentNodeCheck(node);
+                      if(checkedReceivers.size > 0){
                           $("#sendFilesButton").attr('disabled', false);
                       }
 
                     },
                     onNodeUnchecked: function (event, node) {
-                      checkedReceivers.delete(node.href);
-                      if(checkedReceivers.size == 0){
-                          $("#sendFilesButton").attr('disabled', true);
-                      }
-                     }
+                    var selectNodeIds = getChildNodeIdArr(node); //获取所有子节点
+                    var selectNodes = getChildNodeArr(node);
+                    if (selectNodeIds) { //子节点不为空，则取消选中所有子节点
+                        $('#receivePersonTree').treeview('uncheckNode', [selectNodeIds, { silent: true }]);
+                    }
+
+                    if(selectNodes){
+                      selectNodes.forEach((item,index,array)=>{
+                          checkedReceivers.delete(item.href);
+                      });
+                    }
+
+                    if(checkedReceivers.size == 0){
+                        $("#sendFilesButton").attr('disabled', true);
+                    }
+                    }
                     });
-                    var findCheckableNodess = function() {
-                      return $checkableTree.treeview('search', [ $('#input-check-node').val(), { ignoreCase: true, exactMatch: true } ]);
-                    };
-                    $('#input-check-node').on('keyup', function (e) {
-                      checkableNodes = findCheckableNodess();
-                      $('.check-node').prop('disabled', !(checkableNodes.length >= 1));
-                    });
+
+                    $("#receivePersonTree").css({ "height": "400px","overflow": "auto" });
     	            break;
     	    }
     	},

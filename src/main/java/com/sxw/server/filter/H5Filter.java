@@ -10,7 +10,6 @@ import com.sxw.server.util.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-
 import javax.annotation.Resource;
 import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
@@ -77,7 +76,7 @@ public class H5Filter implements Filter {
                 if (ConfigureReader.instance().createNewAccount(account, password)) {
                     // 初始化用户空间
                     fu.initUserFolder(UserRootSpace.ROOT.getVaue(),account);
-                    fu.initUserFolder(UserRootSpace.RECEIVE.getVaue(),account);
+                    fu.initUserFileSend(UserRootSpace.RECEIVE.getVaue(),account);
                     fu.initUserFolder(UserRootSpace.RECYCLE.getVaue(),account);
                     lu.writeSignUpEvent(request, account, password);
                 }

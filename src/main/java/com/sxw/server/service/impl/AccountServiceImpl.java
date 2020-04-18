@@ -280,7 +280,7 @@ public class AccountServiceImpl implements AccountService {
 						if (ConfigureReader.instance().createNewAccount(account, password)) {
                             // 初始化用户空间
                             fu.initUserFolder(UserRootSpace.ROOT.getVaue(),account);
-                            fu.initUserFolder(UserRootSpace.RECEIVE.getVaue(),account);
+                            fu.initUserFileSend(UserRootSpace.RECEIVE.getVaue(),account);
                             fu.initUserFolder(UserRootSpace.RECYCLE.getVaue(),account);
 							lu.writeSignUpEvent(request, account, password);
 							session.setAttribute("ACCOUNT", account);
@@ -316,6 +316,7 @@ public class AccountServiceImpl implements AccountService {
 		return gson.toJson(goodFriends);
 	}
 
+	// 获得智慧校园组织机构树
     private static void getAllDepartmentTree(JSONArray nodes, JSONArray targetTreeArr){
         if (nodes == null){
             return;

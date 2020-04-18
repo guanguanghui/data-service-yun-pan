@@ -1,5 +1,5 @@
 
-// 获取URL上的视频id参数，它必须是第一个参数。
+// 获取URL上的文档id参数，它必须是第一个参数。
 function getFileIdAndFileName() {
 	var url = location.search;
 	var result=new Array();

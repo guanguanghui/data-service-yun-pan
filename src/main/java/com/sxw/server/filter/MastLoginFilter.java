@@ -3,22 +3,14 @@ package com.sxw.server.filter;
 import javax.annotation.Resource;
 import javax.servlet.annotation.*;
 import javax.servlet.*;
-
 import com.alibaba.fastjson.JSON;
-import com.google.gson.Gson;
-import com.sxw.printer.Printer;
-import com.sxw.server.enumeration.FolderConstraint;
 import com.sxw.server.enumeration.UserRootSpace;
 import com.sxw.server.exception.BusinessException;
 import com.sxw.server.mapper.FolderMapper;
-import com.sxw.server.model.Folder;
 import com.sxw.server.pojo.TokenInfo;
 import com.sxw.server.util.*;
-
 import javax.servlet.http.*;
-
 import org.springframework.core.annotation.Order;
-
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
@@ -35,6 +27,8 @@ public class MastLoginFilter implements Filter {
     private SxwApiUtil sau;
     @Resource
     private FolderUtil fu;
+    @Resource
+    private FolderMapper fm;
 
     public void init(final FilterConfig filterConfig) throws ServletException {
     }
@@ -88,7 +82,7 @@ public class MastLoginFilter implements Filter {
                                 if (ConfigureReader.instance().createNewAccount(account, password)) {
                                     // 初始化用户空间
                                     fu.initUserFolder(UserRootSpace.ROOT.getVaue(),account);
-                                    fu.initUserFolder(UserRootSpace.RECEIVE.getVaue(),account);
+                                    fu.initUserFileSend(UserRootSpace.RECEIVE.getVaue(),account);
                                     fu.initUserFolder(UserRootSpace.RECYCLE.getVaue(),account);
                                     lu.writeSignUpEvent(hsq, account, password);
                                 }
@@ -106,7 +100,6 @@ public class MastLoginFilter implements Filter {
                     hsr.sendRedirect(ConfigureReader.instance().getLoginUrl());
                 } catch (Exception e) {
                     // 其他异常，也返回登陆入口
-                    Printer.instance.print(e.getMessage());
                     hsr.sendRedirect(ConfigureReader.instance().getLoginUrl());
                 }
                 return;

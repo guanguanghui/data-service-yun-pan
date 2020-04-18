@@ -22,13 +22,6 @@
 		#{pfid,jdbcType=VARCHAR} LIMIT 0,2147483647
 	</select>
 
-	<select id="queryNodeTree" parameterType="java.lang.String"
-			resultType="java.lang.String">
-		SELECT CONCAT(file_id,",",file_parent_folder) as id_pid FROM FILE WHERE file_creator = #{account,jdbcType=VARCHAR}
-		UNION
-		SELECT CONCAT(folder_id,",",folder_parent) FROM FOLDER WHERE folder_creator = #{account,jdbcType=VARCHAR}
-	</select>
-
 	<select id="queryByParentFolderIdSection" parameterType="java.util.Map"
 		resultMap="BaseResultMap">
 		SELECT * FROM FILE WHERE file_parent_folder =
@@ -46,6 +39,12 @@
 			resultMap="BaseResultMap">
 		SELECT * FROM FILE WHERE file_md5 =
 		#{fileMd5,jdbcType=VARCHAR}
+	</select>
+
+	<select id="queryByAccount" parameterType="java.lang.String"
+			resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE file_creator =
+		#{account,jdbcType=VARCHAR}
 	</select>
 
 	<insert id="insert" parameterType="com.sxw.server.model.Node">
@@ -87,10 +86,8 @@
 		SELECT sum(file_length) FROM FILE WHERE del_flag = 'false' AND file_creator = #{account,jdbcType=VARCHAR}
 	</select>
 
-	<select id="queryDeletedFileOrFolder" parameterType="java.lang.String" resultType="java.lang.String">
-		SELECT CONCAT(file_id,",",file_creation_date,",","1") FROM FILE WHERE del_flag = 'true' and file_creator = #{account,jdbcType=VARCHAR}
-		UNION
-		SELECT CONCAT(folder_id,",",folder_creation_date,",","0") FROM FOLDER WHERE del_flag = 'true' and folder_creator = #{account,jdbcType=VARCHAR}
+	<select id="queryDeletedFiles" parameterType="java.lang.String" resultMap="BaseResultMap">
+		SELECT * FROM FILE WHERE del_flag = 'true' and file_creator = #{account,jdbcType=VARCHAR}
 	</select>
 
 	<select id="queryById" parameterType="java.lang.String"

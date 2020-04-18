@@ -14,10 +14,8 @@ import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import com.google.gson.Gson;
 import com.sxw.printer.Printer;
-import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.PowerPointType;
 import com.sxw.server.mapper.PropertiesMapper;
 import com.sxw.server.model.Propertie;
@@ -79,9 +77,6 @@ public class ResourceServiceImpl implements ResourceService {
         if (fid != null) {
             Node n = nm.queryById(fid);
             if (n != null) {
-                if (ConfigureReader.instance().authorized(account, AccountAuth.DOWNLOAD_FILES,
-                        fu.getAllFoldersId(n.getFileParentFolder()))
-                        && ConfigureReader.instance().accessFolder(fm.queryById(n.getFileParentFolder()), account)) {
                     File file = fbu.getFileFromBlocks(n);
                     if (file != null && file.isFile()) {
                         String suffix = "";
@@ -126,7 +121,7 @@ public class ResourceServiceImpl implements ResourceService {
                         }
                         return;
                     }
-                }
+
             }
         }
         try {
@@ -220,9 +215,7 @@ public class ResourceServiceImpl implements ResourceService {
         if (fileId != null) {
             Node n = nm.queryById(fileId);
             if (n != null) {
-                if (ConfigureReader.instance().authorized(account, AccountAuth.DOWNLOAD_FILES,
-                        fu.getAllFoldersId(n.getFileParentFolder()))
-                        && ConfigureReader.instance().accessFolder(fm.queryById(n.getFileParentFolder()), account)) {
+
                     File file = fbu.getFileFromBlocks(n);
                     if (file != null && file.isFile()) {
                         // 后缀检查
@@ -245,7 +238,7 @@ public class ResourceServiceImpl implements ResourceService {
                             }
                         }
                     }
-                }
+
             }
         }
         try {
@@ -262,9 +255,6 @@ public class ResourceServiceImpl implements ResourceService {
         if (fileId != null) {
             Node n = nm.queryById(fileId);
             if (n != null) {
-                if (ConfigureReader.instance().authorized(account, AccountAuth.DOWNLOAD_FILES,
-                        fu.getAllFoldersId(n.getFileParentFolder()))
-                        && ConfigureReader.instance().accessFolder(fm.queryById(n.getFileParentFolder()), account)) {
                     File file = fbu.getFileFromBlocks(n);
                     if (file != null && file.isFile()) {
                         // 后缀检查
@@ -287,7 +277,6 @@ public class ResourceServiceImpl implements ResourceService {
                             }
                         }
                     }
-                }
             }
         }
         try {
@@ -320,9 +309,7 @@ public class ResourceServiceImpl implements ResourceService {
         if (fileId != null) {
             Node n = nm.queryById(fileId);
             if (n != null) {
-                if (ConfigureReader.instance().authorized(account, AccountAuth.DOWNLOAD_FILES,
-                        fu.getAllFoldersId(n.getFileParentFolder()))
-                        && ConfigureReader.instance().accessFolder(fm.queryById(n.getFileParentFolder()), account)) {
+
                     File file = fbu.getFileFromBlocks(n);
                     if (file != null && file.isFile()) {
                         // 后缀检查
@@ -351,7 +338,7 @@ public class ResourceServiceImpl implements ResourceService {
                                 break;
                         }
                     }
-                }
+
             }
         }
         try {
@@ -367,9 +354,7 @@ public class ResourceServiceImpl implements ResourceService {
         if (fileId != null) {
             Node n = nm.queryById(fileId);
             if (n != null) {
-                if (ConfigureReader.instance().authorized(account, AccountAuth.DOWNLOAD_FILES,
-                        fu.getAllFoldersId(n.getFileParentFolder()))
-                        && ConfigureReader.instance().accessFolder(fm.queryById(n.getFileParentFolder()), account)) {
+
                     File file = fbu.getFileFromBlocks(n);
                     if (file != null && file.isFile()) {
                         // 后缀检查
@@ -403,7 +388,7 @@ public class ResourceServiceImpl implements ResourceService {
 
                         }
                     }
-                }
+
             }
         }
         try {

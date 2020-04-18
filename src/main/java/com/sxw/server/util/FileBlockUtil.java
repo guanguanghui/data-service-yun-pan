@@ -4,6 +4,7 @@ import com.sxw.printer.Printer;
 import com.sxw.server.enumeration.AccountAuth;
 import com.sxw.server.enumeration.FileSendType;
 import com.sxw.server.enumeration.FolderConstraint;
+import com.sxw.server.enumeration.UserRootSpace;
 import com.sxw.server.mapper.FileSenderMapper;
 import com.sxw.server.mapper.FolderMapper;
 import com.sxw.server.mapper.NodeMapper;
@@ -47,8 +48,7 @@ public class FileBlockUtil {
 	private LogUtil lu;// 日志工具
 	@Resource
 	private FolderUtil fu;// 文件夹操作工具
-	@Resource
-	private AccessAuthUtil accessAuthUtil;
+
 
 	/**
 	 * 
@@ -263,9 +263,9 @@ public class FileBlockUtil {
 	public void checkFileBlocks() {
 		Thread checkThread = new Thread(() -> {
 			// 检查是否存在未正确对应文件块的文件节点信息，若有则删除，从而确保文件节点信息不出现遗留问题
-			checkNodes("root");
-			checkNodes("recycle");
-            checkReceiveNodes("receive");
+			checkNodes(UserRootSpace.ROOT.getVaue());
+			checkNodes(UserRootSpace.RECYCLE.getVaue());
+            checkReceiveNodes(UserRootSpace.RECEIVE.getVaue());
 			// 检查是否存在未正确对应文件节点的文件块，若有则删除，从而确保文件块不出现遗留问题
 			List<File> paths = new ArrayList<>();
 			paths.add(new File(ConfigureReader.instance().getFileBlockPath()));
@@ -295,21 +295,19 @@ public class FileBlockUtil {
 
 	// 删除过期文件
 	public void deleteExpiratedFiles(String account){
-		List<String> ids = fm.queryDeletedFileOrFolder(account);
 		long druation = ConfigureReader.instance().getExpirationDate(account);
+		List<Node> files = fm.queryDeletedFiles(account);
+		List<Folder> folders = flm.queryDeletedFolders(account);
 
-		ids.parallelStream().forEach(e -> {
-			String items[] = e.split(",");
-			String id = items[0];
-			String deleteData = items[1];
-			boolean isFile = items[2] == "1";
-			if(ExpirationDateUtil.isExpirationDate(deleteData,druation)){
-				if (isFile){
-					Node node = fm.queryById(id);
-					deleteFromFileBlocks(node);
-				}else {
-					flm.deleteById(id);
-				}
+		files.parallelStream().forEach(e -> {
+			if(ExpirationDateUtil.isExpirationDate(e.getFileCreationDate(),druation)){
+				deleteFromFileBlocks(e);
+			}
+		});
+
+		folders.parallelStream().forEach(e -> {
+			if(ExpirationDateUtil.isExpirationDate(e.getFolderCreationDate(),druation)){
+				flm.deleteById(e.getFolderId());
 			}
 		});
 	}
@@ -337,15 +335,14 @@ public class FileBlockUtil {
 		keyMap1.put("rows", Integer.MAX_VALUE);
 		List<FileSend> fileSends = fsm.queryByPid(keyMap1);
 		fileSends.stream().forEach(e -> {
-
 		    if(e.getFileType().equals(FileSendType.FILE.getName())){
                Node node = fm.queryById(e.getFileId());
-               if(node == null){
+               if(node == null && !e.getFileId().equals(UserRootSpace.RECEIVE.getVaue())){
                    fsm.deleteById(e.getId());
                }
             }else if(e.getFileType().equals(FileSendType.FOLDER.getName())){
 		        Folder folder = flm.queryById(e.getFileId());
-		        if(folder == null){
+		        if(folder == null && !e.getFileId().equals(UserRootSpace.RECEIVE.getVaue())){
                     fu.deleteAllFolderSend(e.getId());
                 }else{
                     checkReceiveNodes(e.getId());
@@ -387,12 +384,11 @@ public class FileBlockUtil {
 					fo = flm.queryById(folderSend.getFileId());
 				}
 
-				if (accessAuthUtil.accessFolder(fo, account) && accessAuthUtil
-						.authorized(account, AccountAuth.DOWNLOAD_FILES, fu.getAllFoldersId(fo.getFolderParent()))) {
+
 					if (fo != null) {
 						folders.add(fo);
 					}
-				}
+
 			}
 			final List<Node> nodes = new ArrayList<>();
 			for (String id : idList) {
@@ -401,13 +397,11 @@ public class FileBlockUtil {
 				if (fileSend != null){
 				    n = fm.queryById(fileSend.getFileId());
                 }
-				if ( (accessAuthUtil.accessFolder(flm.queryById(n.getFileParentFolder()), account) || accessAuthUtil.accessSendFile(n, account))
-						&& accessAuthUtil.authorized(account, AccountAuth.DOWNLOAD_FILES,
-								fu.getAllFoldersId(n.getFileParentFolder()))) {
+
 					if (n != null) {
 						nodes.add(n);
 					}
-				}
+
 			}
 			for (Folder fo : folders) {
 				int i = 1;
@@ -454,7 +448,7 @@ public class FileBlockUtil {
 
 	// 迭代生成ZIP文件夹单元，将一个文件夹内的文件和文件夹也进行打包
 	private void addFoldersToZipEntrySourceArray(Folder f, List<ZipEntrySource> zs, String account, String parentPath) {
-		if (f != null && accessAuthUtil.accessFolder(f, account)) {
+		if (f != null) {
 			String folderName = f.getFolderName();
 			String thisPath = parentPath + folderName + "/";
 			zs.add(new ZipEntrySource() {

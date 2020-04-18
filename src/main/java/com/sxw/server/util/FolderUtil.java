@@ -116,7 +116,17 @@ public class FolderUtil {
         Collections.reverse(fsList);
         List<FolderSendView> folderList = fsList.parallelStream().map(folderId -> {
 			FileSend fs = fsm.queryById(folderId);
-			FolderSendView fsv = new FolderSendView(fm.queryById(fs.getFileId()));
+			FolderSendView fsv = null;
+			if(fs.getFileId().startsWith(UserRootSpace.RECEIVE.getVaue())){
+				fsv = new FolderSendView();
+				fsv.setFolderId(fs.getFileId());
+				fsv.setFolderName(fs.getFileName());
+				fsv.setFolderCreator(fs.getFileSender());
+				fsv.setFolderCreationDate(fs.getFileSendDate());
+				fsv.setFolderConstraint(FolderConstraint.PRIVATE.getIndex());
+			}else{
+				fsv = new FolderSendView(fm.queryById(fs.getFileId()));
+			}
 			fsv.setId(fs.getId());
 			fsv.setPid(fs.getPid());
             return fsv;
@@ -212,15 +222,15 @@ public class FolderUtil {
 		}
 	}
 
-	public int deleteAllFolderSend(final String folderId) {
-		final Thread deleteChildFolderThread = new Thread(() -> this.iterationDeleteFolderSend(folderId));
+	public int deleteAllFolderSend(final String id) {
+		final Thread deleteChildFolderThread = new Thread(() -> this.iterationDeleteFolderSend(id));
 		deleteChildFolderThread.start();
-		return this.fsm.deleteById(folderId);
+		return this.fsm.deleteById(id);
 	}
 
-	private void iterationDeleteFolderSend(final String folderId) {
+	private void iterationDeleteFolderSend(final String id) {
 		Map<String, Object> keyMap1 = new HashMap<>();
-		keyMap1.put("pid", folderId);
+		keyMap1.put("pid", id);
 		keyMap1.put("offset", 0L);// 进行查询
 		keyMap1.put("rows", Integer.MAX_VALUE);
 		List<FileSend> fileSends = fsm.queryByPid(keyMap1);

@@ -1,13 +1,16 @@
 package com.sxw.server.mapper;
 
 import com.sxw.server.model.Folder;
-import com.sxw.server.model.*;
 import java.util.*;
 
 public interface FolderMapper
 {
     Folder queryById(final String fid);
-    
+
+    List<Folder> queryDeletedFolders(String account);
+
+    List<Folder> queryByAccount(String account);
+
     /**
      * 
      * <h2>按照父文件夹的ID查找其下的所有文件夹（分页）</h2>

@@ -18,6 +18,16 @@
 		#{fid,jdbcType=VARCHAR}
 	</select>
 
+    <select id="queryByAccount" parameterType="java.lang.String"
+            resultMap="BaseResultMap">
+        SELECT * FROM FOLDER WHERE folder_creator =
+        #{account,jdbcType=VARCHAR}
+    </select>
+
+	<select id="queryDeletedFolders" parameterType="java.lang.String" resultMap="BaseResultMap">
+		SELECT * FROM FOLDER WHERE del_flag = 'true' and folder_creator = #{account,jdbcType=VARCHAR}
+	</select>
+
 	<select id="queryByParentId" parameterType="java.lang.String"
 		resultMap="BaseResultMap">
 		SELECT * FROM FOLDER WHERE folder_parent =

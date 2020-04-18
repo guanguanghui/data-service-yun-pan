@@ -140,7 +140,7 @@ public class FileNodeUtil {
 				if (rs8.next()) {
 					if (rs8.getInt(1) == 0) {
 						final Statement state9 = conn.createStatement();
-						state9.execute("INSERT INTO FILE_SEND VALUES('receive','NULL','receive', '收到文件', 'NULL', 'NULL', '--', '--', '--', '1', 'file')");
+						state9.execute("INSERT INTO FILE_SEND VALUES('receive','NULL','receive', '收到文件', 'NULL', 'NULL', '--', '--', '--', '1', 'folder')");
 					}
 				}
 				state8.close();
